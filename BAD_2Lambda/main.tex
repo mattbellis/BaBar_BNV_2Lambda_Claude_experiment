@@ -1,0 +1,276 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage{graphicx}
+
+\usepackage{tikz}
+\usepackage[compat=1.1.0]{tikz-feynman}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{subcaption}
+%\usepackage{subfig}
+%\usepackage{subfigure}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage{lineno}
+
+
+% Set the following numbers to the correct values for your paper
+%\newcommand{\BaBarNumber}     {{\texttt\pounds}{\texttt\pounds}, version 1 \textbf{DRAFT}} 
+\newcommand{\BaBarNumber}     {\#2723, version 5} 
+\newcommand{\BABARPubYear}    {19}
+\newcommand{\BABARPubNumber}  {00}
+\newcommand{\BABARConfNumber} {00}
+\newcommand{\SLACPubNumber} {0000}
+\newcommand{\LANLNumber} {0000}
+
+% Input the symbols file
+\input babarsym.tex
+
+% use and tweak the 'url' package to produce nicely formatted URLs 
+\usepackage{fullpage}
+\usepackage{hyperref}
+\usepackage{url}
+\hypersetup{
+    colorlinks,
+    citecolor=red,
+    filecolor=red,
+    linkcolor=blue,
+    urlcolor=blue
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% BEGIN DOCUMENT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+{
+    \linenumbers
+\pagestyle{empty}
+
+\begin{flushleft}
+  \babar\ Analysis Document \BaBarNumber \\
+%  \babar-CONF-\BABARPubYear/\BABARConfNumber \\
+  %\babar-PUB-\BABARPubYear/\BABARPubNumber \\
+%  SLAC-PUB-\SLACPubNumber \\
+%  hep-ex/\LANLNumber \\
+  \today \\
+\end{flushleft}
+
+\par\vskip 1cm
+
+% Title of the paper
+\begin{center}
+    \LARGE \bf \boldmath A search for baryon-number violating decays in 
+    $\Bz \rightarrow \Lambda^0 \Lambda^0$
+    and
+    $\Bz \rightarrow \Lambda^0 \Lambda^+_c$
+
+\end{center}
+\bigskip
+
+\begin{center}
+  \large 
+   Matt Bellis\\
+  \normalsize
+  \textit{Siena College} and \\
+  \textit{Stanford University} \\
+  \ \\ 
+  \large 
+   Brian Shuve\\
+  \normalsize
+  \textit{Harvey Mudd College} \\
+  \ \\ 
+  \large The \babar\ Collaboration\\
+  \ \\
+\end{center}
+\bigskip
+
+% Abstract
+\begin{center}
+\begin{abstract}
+
+Searches for $B$ mesons decaying to final states containing
+two baryons,
+%where the baryon is
+%either a proton or neutron and the lepton is
+%a muon,  electron, or neutrino. 
+specifically a proton and a $\Lambda^0$.
+These decays violate baryon number by $\pm$2, depending
+on the charge-conjugation,
+and would be a signature of physics beyond the standard model.
+No significant signal is observed 
+and the upper limit 
+is set on the branching fractions at the 90\% confidence level
+of $6.1 \times 10^{-8}$.
+\end{abstract}
+\end{center}
+
+\vfill
+
+\vspace{1.0cm}
+\begin{center}
+{\em Stanford Linear Accelerator Center, Stanford University, 
+Stanford, CA 94309} \\ \vspace{0.1cm}\hrule\vspace{0.1cm}
+Work supported in part by Department of Energy contract DE-AC03-76SF00515.
+\end{center}
+}
+
+\thispagestyle{empty}
+
+\newpage
+
+\tableofcontents
+\newpage
+
+
+%+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+% The body of the paper starts here %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 0
+    \linenumbers
+\section{Version tracker\label{sec:version_tracker}}
+\input{version_tracker}
+\clearpage
+\newpage
+
+% Section 1
+\section{Introduction \label{sec:intro}}
+\input{introduction}
+\clearpage
+\newpage
+
+% Section 2
+\section{Theoretical motivation and other searches\label{sec:theory}}
+\input{theoretical_motivation}
+\clearpage
+\newpage
+
+
+% Section 
+\section{Datasets, blinding region definitions, and initial data skims\label{sec:datasets}}
+\input{analysis_introduction}
+\clearpage
+\newpage
+
+% Section 
+\section{Data selection and optimization\label{sec:dataselection}}
+\input{data_selection}
+\clearpage
+\newpage
+
+% Section 
+\section{More specific standard-model backgrounds\label{sec:specbkg}}
+\input{specific_backgrounds}
+\clearpage
+\newpage
+
+\section{Inference with higher statistics}
+\input{inference}
+\clearpage
+\newpage
+
+\section{Efficiency Calculations}
+\input{efficiency_calculations}
+\clearpage
+\newpage
+
+\section{Branching fraction calculation and systematic uncertainties\label{sec:br_uncert}}
+\input{branching_fraction_and_uncertainties}
+\clearpage
+\newpage
+
+\section{Upper Limit and Significance Calculation}
+\input{upper_limit_significance}
+\clearpage
+\newpage
+
+\section{Unblinded results}
+\input{unblinded_results}
+\clearpage
+\newpage
+
+%\section{Baryon-number conserving decays}
+%\input{bnc_decays}
+%\clearpage
+%\newpage
+
+%\section{Fitting and extraction of signal parameters %\label{sec:fits}}
+%\input{fitting_and_extraction}
+%\clearpage
+%\newpage
+
+%\section{Efficiency calculations\label{sec:eff_calc}}
+%\input{efficiency_calculation}
+%\clearpage
+%\newpage
+
+%\section{Final data selection plots}
+%\input{final_data_selection}
+%\clearpage
+%\newpage
+
+%\section{Upper limit and significance %calculation\label{sec:ul_and_sens}}
+%\input{upper_limit_calc}
+%\clearpage
+%\newpage
+
+%\section{Toy MC studies\label{sec:toy_mc_studies}}
+%\input{toy_mc_studies}
+%\clearpage
+%\newpage
+
+%\section{Blinded summary}
+%\input{blinded_summary}
+%\clearpage
+%\newpage
+
+%\section{Final (unblinded) results}
+%\input{final_results}
+%\clearpage
+%\newpage
+
+%\section{Questions}
+%\input{questions}
+%\clearpage
+%\newpage
+
+
+
+\clearpage
+%-------------------------------
+% Start the appendicies
+\appendix
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% UNCOMMENT FOR FINAL PAPER
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{$\Lambda^0$ purity studies - supplemental plots \label{sec:lambda_purity_plots}}
+\input{lambda_purity_plots}
+\clearpage
+\newpage
+
+\section{Additional plots from ML studies \label{app:ml_plots}}
+\input{additional_multivariate_plots}
+\clearpage
+\newpage
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%      BIBLIOGRAPHY      %%%%%%%%%%%%%%%%%
+% Bibliography
+%-----------------------------
+\bibliographystyle{unsrt}
+\bibliography{paper}
+
+% Add these 
+% https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.133.071802
+
+%^%^%^%^^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%^%
+\end{document}

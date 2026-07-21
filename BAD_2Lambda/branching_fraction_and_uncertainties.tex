@@ -1,0 +1,19 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Branching fraction and uncertainties
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Given some measured yield of signal events, the prescription for turning this into a branching fraction (either observed or an upper limit) is given as follows:
+\[
+    \mathcal{B}(B \to p + \Lambda^0) = \frac{N_{\text{sig}}}{\epsilon_{\text{sig}} \times \mathcal{B}_{\Lambda^0 \rightarrow p \pi^-} \times N_{B\bar{B}} \times 2 \times \mathcal{B}_{\text{neut./chgB}}}
+\]
+
+\begin{itemize}
+  \item $N_{\text{sig}}$: The number of signal events extracted by the fit.
+  \item $\epsilon_{\text{sig}}$: The reconstruction efficiency for the full decay path. This is calculated from the signal MC sample and the full GEANT4 detector simulation.
+  \item $\mathcal{B}_{B\rightarrow p \pi^-}$: The branching fraction for the decay of the $\Lambda^0$ to the final state of interest, $p\pi^-$.
+  \item $N_{B\bar{B}}$: The number of $B\bar{B}$ pairs produced in the experiment during the running time over which these data samples were recorded.
+  \item $\mathcal{B}_{\text{neut./chgB}}$: The branching fraction of the $\Upsilon(4S)$ to either a charged or neutral $B\bar{B}$ pair.
+\end{itemize}
+
+The factor of 2 is because each $B\overline{B}$ event has two (2) $B$ mesons which could
+decay to this final state.\\
