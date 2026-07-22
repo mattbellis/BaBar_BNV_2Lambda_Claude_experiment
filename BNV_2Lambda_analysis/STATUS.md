@@ -1,14 +1,29 @@
 # STATUS — BNV 2-Lambda analyses
 
-Snapshot of where things stand. Last updated: **2026-07-21** (end of Stage 0/1
-code development; both channels run through notebook 01).
+Snapshot of where things stand. Last updated: **2026-07-22** (Stage 0/1
+documentation machinery + BAD sections drafted; awaiting human review).
 
 ## Where we are
 
-Stage 0/1 (load data + diagnostics) is **code-complete and validated by eye**
-for both channels. The Stage 0/1 checkpoint items remaining: write the BAD
-sections + results-yaml machinery (first task for next session), then formal
-sign-off.
+Stage 0/1 (load data + diagnostics) is **code-complete**, and the
+documentation is drafted:
+
+- `results/<channel>.yaml` written by `run_stage01.py` (event counts,
+  weights, cutflow, region definitions, blinding check, LambdaC mode
+  fractions). Claude test-ran it; **Matt should re-run to verify**:
+  `python run_stage01.py --channel all`.
+- `generate_latex_macros.py` produces `BAD_2Lambda/generated_numbers.tex`
+  (~100 macros) + generated tables (samples, cutflow, LambdaC modes,
+  data skims).
+- BAD sections drafted: `analysis_introduction.tex` (datasets, MC samples,
+  blinding definitions + verification) and `data_selection.tex`
+  (multiplicities, preselection cutflow, LambdaC decay modes incl. the
+  mode-4 suppression, diagnostic distributions). Title/abstract fixed
+  (B+ for the LamC channel); BAD number set to TBD. Builds clean with
+  latexmk (26 pp, no undefined refs).
+
+**Checkpoint items for Matt:** review the BAD PDF and the yaml numbers,
+re-run run_stage01.py to verify reproducibility, then commit.
 
 ## What exists
 
@@ -60,6 +75,10 @@ sign-off.
    studies.
 4. **LambdaC / K_S flight cuts** (Stage 2): thresholds TBD (K_S window on
    the pre-fit mass; Lam0 window ±3 MeV from p-Lambda0 to be re-checked).
+5. **Which integrated luminosity to quote**: the dataset CSV sums to
+   430.9 fb^-1 (macro \IntLumiInvFb), but CLAUDE.md (and the p-Lambda0
+   abstract) quote 424.3 fb^-1 at the Y(4S) — likely on-peak vs. total.
+   *Decision (Matt, 2026-07-22): keep 430.9 for now, may revisit.*
 
 ## Next steps (agreed)
 

@@ -3,7 +3,197 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Overview}
 
-To properly address possible backgrounds, we identify potential backgrounds and possible approaches for discriminating the background from the signal. These procedures are described in more detail in subsequent sections. 
+The selection follows the sequence developed for the
+$\bar{p}\Lambda^0$ analysis. The stages, each optimized before the next
+is applied, are:
+%
+\begin{enumerate}
+    \item preselection: single-candidate requirements and the
+          \mes/\DeltaE\ fitting region (this section);
+    \item $\Lambda^0$ (and $\Lambda_c^+$, $K_S^0$) purity requirements:
+          flight-length significance and mass windows;
+    \item particle-identification (PID) selectors, optimized with the
+          Punzi figure of merit;
+    \item an antibaryon veto;
+    \item a multilayer-perceptron classifier built on event-shape
+          variables, with its output requirement optimized using a
+          \DeltaE-sideband background estimate.
+\end{enumerate}
+%
+The dominant backgrounds are continuum $q\bar{q}$ production (with
+$c\bar{c}$ and $u\bar{u}/d\bar{d}/s\bar{s}$ contributing roughly equally
+after preselection) and combinatorial $\Lambda$ candidates in $\BB$
+events. This section documents the preselection and the diagnostic
+distributions used to validate the samples; the optimization of stages
+2--5 will be documented in subsequent sections as it is completed.
 
-Sources of backgrounds: 
+\subsection{Candidate reconstruction and multiplicities}
 
+For $\Bz \rightarrow \Lambda^0\Lambda^0$, $B$ candidates are formed from
+two $\Lambda^0 \rightarrow p \pi^-$ candidates. For
+$\Bu \rightarrow \Lambda_c^+\Lambda^0$, $B$ candidates are formed from a
+$\Lambda_c^+$ candidate (reconstructed in the four modes described
+below) and a $\Lambda^0 \rightarrow p \pi^-$ candidate.
+
+Figure~\ref{fig:multiplicities} shows the numbers of $B$, $\Lambda^0$,
+and (where applicable) $\Lambda_c^+$ candidates per event before any
+selection. The combinatorics of the two channels are very different: in
+the $\Lambda^0\Lambda^0$ channel almost all events contain a single $B$
+candidate, while in the $\Lambda_c^+\Lambda^0$ channel the many
+$\Lambda_c^+$ reconstruction combinations produce up to $\sim$60 $B$
+candidates in a single event.
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/Lam0Lam0/diagnostics_cut0_multiplicity.png}
+    \includegraphics[width=0.95\textwidth]{figures/Lam0LamC/diagnostics_cut0_multiplicity.png}
+    \caption{Candidate multiplicities per event before any selection,
+    for $\Bz \rightarrow \Lambda^0\Lambda^0$ (top) and
+    $\Bu \rightarrow \Lambda_c^+\Lambda^0$ (bottom). Stacked histograms
+    are luminosity-weighted background MC; points are the blinded
+    collision data; the line is signal MC with arbitrary normalization.}
+    \label{fig:multiplicities}
+\end{figure}
+
+\subsection{Preselection and diagnostic cutflow}
+
+The preselection used for the diagnostic studies consists of:
+%
+\begin{itemize}
+    \item[\bf 1.] {\bf single-candidate requirement:} exactly one $B$
+        candidate, and exactly the expected number of composite
+        daughters (two $\Lambda^0$ for $\Bz \rightarrow
+        \Lambda^0\Lambda^0$; one $\Lambda_c^+$ and one $\Lambda^0$ for
+        $\Bu \rightarrow \Lambda_c^+\Lambda^0$);
+    \item[\bf 2.] {\bf fitting region:} the $B$ candidate lies within
+        the \mes/\DeltaE\ fitting region defined in
+        Section~\ref{sec:blinding}.
+\end{itemize}
+%
+Tables~\ref{tab:cutflowLamLam} and \ref{tab:cutflowLamLamC} give the
+numbers of events passing each requirement for all samples. The
+single-candidate requirement retains
+essentially all signal in the $\Lambda^0\Lambda^0$ channel
+(\LamLamCutflowSignalCutOne\ of \LamLamCutflowSignalCutZero\ events)
+but only about half in the $\Lambda_c^+\Lambda^0$ channel
+(\LamLamCCutflowSignalCutOne\ of \LamLamCCutflowSignalCutZero); the
+mode-dependence of this loss is quantified below.
+
+\input{generated_table_cutflow_Lam0Lam0}
+
+\input{generated_table_cutflow_Lam0LamC}
+
+\subsection{$\Lambda_c^+$ decay modes}
+\label{sec:lambdacmodes}
+
+The $\Lambda_c^+$ signal MC was generated in four decay modes in equal
+amounts, and candidates are reconstructed in all four. Each candidate is
+classified using the number of $\Lambda_c^+$ daughters and the identity
+of the first daughter:
+%
+\begin{center}
+\begin{tabular}{clcc}
+\hline
+Mode & Decay & $n_{\rm daughters}$ & first daughter \\
+\hline
+1 & $p K^- \pi^+$               & 3 & $p$ \\
+2 & $p K_S^0$                   & 2 & $p$ \\
+3 & $p K_S^0 \pi^+\pi^-$        & 4 & $p$ \\
+4 & $\Lambda^0 \pi^+\pi^+\pi^-$ & 4 & $\Lambda^0$ \\
+\hline
+\end{tabular}
+\end{center}
+
+Table~\ref{tab:lambdacmodes} shows the fraction of signal-MC
+$\Lambda_c^+$ candidates in each mode, before any selection and after
+the single-candidate requirement. Before cuts the four modes appear in
+comparable amounts. After the single-candidate requirement, however,
+mode 4 is eliminated (\LamLamCModeFracFourSingleCandPct\%): its
+$\Lambda^0$ daughter enters the same candidate collection as the
+$\Lambda^0$ from the $B$ decay, so these events have at least two
+$\Lambda^0$ candidates and fail the $n_{\Lambda^0} = 1$ requirement.
+%
+\textbf{The treatment of the single-candidate requirement in the
+$\Lambda_c^+\Lambda^0$ channel is therefore an open design decision}; it
+will be revisited once the PID and purity requirements are in place and
+the multiplicity of surviving candidates is known.
+
+\input{generated_table_lambdac_modes}
+
+Figure~\ref{fig:lambdac_mode_split} shows the \mes, \DeltaE, and
+$\Lambda_c^+$ mass distributions of signal MC separated by decay mode;
+Figure~\ref{fig:lamc_specific} shows the flight-significance
+distributions of the $\Lambda^0$ separated by parentage (direct $B$
+daughter vs.\ daughter of the $\Lambda_c^+$), the $\Lambda_c^+$ flight
+significance, and the $K_S^0$ pre-fit mass and flight significance.
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/Lam0LamC/lambdac_mode_split.png}
+    \caption{Signal-MC distributions (area-normalized, before any
+    selection) separated by $\Lambda_c^+$ decay mode: $\Lambda_c^+$ mass
+    (left), \mes\ (center), and \DeltaE\ (right).}
+    \label{fig:lambdac_mode_split}
+\end{figure}
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/Lam0LamC/diagnostics_cut0_lamc_specific.png}
+    \caption{$\Lambda_c^+\Lambda^0$ channel, before any selection:
+    flight significance of $\Lambda^0$ candidates that are direct $B$
+    daughters and those used inside a $\Lambda_c^+$; $\Lambda_c^+$
+    flight significance; $K_S^0$ pre-fit mass and flight significance.
+    Stacked histograms are luminosity-weighted background MC; points are
+    blinded collision data; the line is signal MC with arbitrary
+    normalization.}
+    \label{fig:lamc_specific}
+\end{figure}
+
+\subsection{Diagnostic distributions}
+
+Figures~\ref{fig:kinematics_LamLam} and \ref{fig:kinematics_LamLamC}
+show the candidate kinematic distributions (\mes, \DeltaE, candidate
+masses, and flight quantities) after the single-candidate requirement,
+and Figures~\ref{fig:eventshape_LamLam} and \ref{fig:eventshape_LamLamC}
+show the event-shape variables that are candidates for the multivariate
+classifier. The background MC describes the shapes of the data well. An
+overall normalization offset of order a factor of two, also observed in
+the $\bar{p}\Lambda^0$ analysis, is visible in some distributions; the
+analysis does not rely on the absolute background normalization from MC,
+as the background estimate is taken from data sidebands.
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/Lam0Lam0/diagnostics_cut1_kinematics.png}
+    \caption{Candidate kinematic distributions for
+    $\Bz \rightarrow \Lambda^0\Lambda^0$ after the single-candidate
+    requirement. Stacked histograms are luminosity-weighted background
+    MC; points are blinded collision data; the line is signal MC with
+    arbitrary normalization.}
+    \label{fig:kinematics_LamLam}
+\end{figure}
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/Lam0LamC/diagnostics_cut1_kinematics.png}
+    \caption{Same as Figure~\ref{fig:kinematics_LamLam} for
+    $\Bu \rightarrow \Lambda_c^+\Lambda^0$.}
+    \label{fig:kinematics_LamLamC}
+\end{figure}
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/Lam0Lam0/diagnostics_cut1_eventshape.png}
+    \caption{Event-shape variables for
+    $\Bz \rightarrow \Lambda^0\Lambda^0$ after the single-candidate
+    requirement.}
+    \label{fig:eventshape_LamLam}
+\end{figure}
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/Lam0LamC/diagnostics_cut1_eventshape.png}
+    \caption{Same as Figure~\ref{fig:eventshape_LamLam} for
+    $\Bu \rightarrow \Lambda_c^+\Lambda^0$.}
+    \label{fig:eventshape_LamLamC}
+\end{figure}

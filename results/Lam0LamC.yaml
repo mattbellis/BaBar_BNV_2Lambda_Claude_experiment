@@ -1,0 +1,111 @@
+channel: Lam0LamC
+stage01:
+  n_events_mc:
+    '-999': 112491
+    '1005': 94837
+    '998': 53593
+    '1237': 13637
+    '1235': 12292
+    '3429': 40
+  n_events_data: 124962
+  int_lumi_invpb: 430872.30000000005
+  scaling_weights:
+    '998': 0.2506879075487834
+    '1005': 0.49619965664110677
+    '1235': 0.3191592629119508
+    '1237': 0.31492522877218293
+    '3429': 0.24466843736502886
+  cut_names:
+    0: no cut
+    1: single candidate
+    2: single cand. + fit region
+  cutflow_mc:
+    '-999':
+      0: 112491
+      1: 57497
+      2: 56213
+    '1005':
+      0: 94837
+      1: 16542
+      2: 3470
+    '1235':
+      0: 12292
+      1: 1257
+      2: 305
+    '1237':
+      0: 13637
+      1: 1098
+      2: 301
+    '3429':
+      0: 40
+      1: 15
+      2: 1
+    '998':
+      0: 53593
+      1: 16183
+      2: 3345
+  cutflow_data:
+    0: 124962
+    1: 22531
+    2: 4114
+  region_definitions:
+    signal MES:
+    - 5.27
+    - 5.3
+    fitting MES:
+    - 5.2
+    - 5.3
+    signal DeltaE:
+    - -0.07
+    - 0.07
+    fitting DeltaE:
+    - -0.2
+    - 0.2
+    sideband 1 DeltaE:
+    - 0.07
+    - 0.14
+    sideband 2 DeltaE:
+    - -0.14
+    - -0.07
+    sideband MES:
+    - 5.27
+    - 5.3
+  region_counts_data:
+    signal: 0
+    fit: 36654
+    sideband1: 772
+    sideband2: 1129
+  region_counts_signal_mc:
+    signal: 107366
+    fit: 131975
+    sideband1: 1723
+    sideband2: 2955
+  blinding_check:
+    n_data_candidates_in_signal_region: 0
+    passed: true
+  composites:
+    LambdaC:
+      n_required: 1
+      mass_window:
+      - 2.27646
+      - 2.2964599999999997
+      flight_var: null
+      flight_cut: null
+    Lambda0:
+      n_required: 1
+      mass_window:
+      - 1.112683
+      - 1.1186829999999999
+      flight_var: Lambda0postFitFlightSignificance
+      flight_cut: 25.0
+  lambdac_mode_fractions:
+    no_cut:
+      1: 0.3171072975185219
+      2: 0.2291676869153975
+      3: 0.2218918559665312
+      4: 0.23183315959954945
+    single_candidate:
+      1: 0.3996904186305372
+      2: 0.4105431587735012
+      3: 0.18976642259596152
+  last_updated: '2026-07-22'

@@ -1,0 +1,94 @@
+channel: Lam0Lam0
+stage01:
+  n_events_mc:
+    '-999': 44755
+    '998': 29798
+    '1005': 28500
+    '1237': 305
+    '3429': 155
+    '1235': 145
+  n_events_data: 33278
+  int_lumi_invpb: 430872.30000000005
+  scaling_weights:
+    '998': 0.2506879075487834
+    '1005': 0.49619965664110677
+    '1235': 0.3191592629119508
+    '1237': 0.31492522877218293
+    '3429': 0.24466843736502886
+  cut_names:
+    0: no cut
+    1: single candidate
+    2: single cand. + fit region
+  cutflow_mc:
+    '-999':
+      0: 44755
+      1: 44336
+      2: 44163
+    '1005':
+      0: 28500
+      1: 27953
+      2: 7024
+    '1235':
+      0: 145
+      1: 137
+      2: 42
+    '1237':
+      0: 305
+      1: 277
+      2: 71
+    '3429':
+      0: 155
+      1: 153
+      2: 26
+    '998':
+      0: 29798
+      1: 29439
+      2: 7503
+  cutflow_data:
+    0: 33278
+    1: 32229
+    2: 7831
+  region_definitions:
+    signal MES:
+    - 5.27
+    - 5.3
+    fitting MES:
+    - 5.2
+    - 5.3
+    signal DeltaE:
+    - -0.07
+    - 0.07
+    fitting DeltaE:
+    - -0.2
+    - 0.2
+    sideband 1 DeltaE:
+    - 0.07
+    - 0.14
+    sideband 2 DeltaE:
+    - -0.14
+    - -0.07
+    sideband MES:
+    - 5.27
+    - 5.3
+  region_counts_data:
+    signal: 0
+    fit: 8095
+    sideband1: 190
+    sideband2: 237
+  region_counts_signal_mc:
+    signal: 43185
+    fit: 44895
+    sideband1: 516
+    sideband2: 640
+  blinding_check:
+    n_data_candidates_in_signal_region: 0
+    passed: true
+  composites:
+    Lambda0:
+      n_required: 2
+      mass_window:
+      - 1.112683
+      - 1.1186829999999999
+      flight_var: Lambda0postFitFlightSignificance
+      flight_cut: 25.0
+  last_updated: '2026-07-22'

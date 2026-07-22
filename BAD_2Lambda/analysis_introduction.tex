@@ -1,22 +1,114 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Analysis introduction 
+% Analysis introduction: datasets, blinding region definitions, initial skims
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-NEEDS TO BE REWRITTEN FOR NEW TOPOLOGY.
+This document describes two searches for baryon-number violating
+($\Delta B = 2$) decays of $B$ mesons:
+%
+\begin{itemize}
+    \item $\Bz \rightarrow \Lambda^0 \Lambda^0$
+    \item $\Bu \rightarrow \Lambda_c^+ \Lambda^0$
+\end{itemize}
+%
+with charge conjugation implied throughout. Both searches follow the
+strategy of the completed $\Bu \rightarrow \bar{p} \Lambda^0$ analysis
+(BAD \#2723): a blind analysis in the phase space defined by the kinematic
+variables \mes\ and \DeltaE, where correctly reconstructed $B$ decays
+occupy a small, well-defined region. Data outside the signal region are
+used to estimate the background, and the signal-shape expectations are
+taken from signal Monte Carlo events processed through the \babar\ GEANT
+simulation.
 
-
-The signal is searched for in the phase space defined by the kinematic variables $m_{ES}$ and $\DeltaE$. 
-This provides clean identification of the $B$ decay as these events occupy a 
-limited section of this phase space. We will use data outside of the signal region to determine the background shape of the fit. \\
-
-The signal shape parameters will be extracted from signal Monte Carlo events run through the \babar ~{} GEANT simulation. \\
+The two channels are analyzed with a single, shared codebase; a channel
+configuration selects the reconstruction topology, mass windows, and
+selection criteria. All numbers quoted in this document are generated
+directly from the analysis results files (never typed by hand).
 
 \subsection{Datasets}
 
-BaBar collected data from 1998 to 2008 and the data was broken into 6 run periods, each representing
-roughly a year of datataking. In Table~\ref{tab:dataskims} we show the integrated luminosity, 
-the number of events in the skim (discussed in the next section), the number of events before
-the skim, and the estimated number of $B\bar{B}$ pairs, calculated from the cross section for
-$e^+e^- \rightarrow B\bar{B}$.
+\babar\ collected data from 1999 to 2008, divided into six run periods,
+each representing roughly a year of data taking. In
+Table~\ref{tab:dataskims} we show, per run period, the integrated
+luminosity, the number of events in the {\tt LambdaVeryVeryLoose} skim
+from which the analysis ntuples are produced, and the estimated number of
+$\BB$ pairs, calculated from the cross section for
+$e^+e^- \rightarrow \BB$.
 
+\input{generated_table_dataskims}
 
+The skimmed events are processed with {\tt BtaTupleMaker} into ROOT
+ntuples, which are then converted to parquet files and analyzed with the
+{\tt awkward-array} Python ecosystem. For each channel, one parquet file
+contains the Monte Carlo samples (signal and backgrounds, labeled by
+their SP mode) and one contains the collision data.
+
+\subsection{Monte Carlo samples}
+
+The background Monte Carlo consists of the standard \babar\ generic SP
+samples: continuum $q\bar{q}$ production (SP-998 for $u\bar{u}, d\bar{d},
+s\bar{s}$ and SP-1005 for $c\bar{c}$), $\BB$ production (SP-1235 for
+\BpBm\ and SP-1237 for \BzBzb), and $\tau^+\tau^-$ production (SP-3429).
+Each background sample is weighted by
+%
+\begin{equation}
+    w = \frac{\sigma \, \mathcal{L}_{\rm int}}{N_{\rm gen}},
+\end{equation}
+%
+where $\sigma$ is the production cross section, $\mathcal{L}_{\rm int}$
+is the integrated luminosity of the data, and $N_{\rm gen}$ is the number
+of generated events in the sample.
+
+Dedicated signal Monte Carlo samples were generated for each channel. For
+the $\Bu \rightarrow \Lambda_c^+ \Lambda^0$ channel the $\Lambda_c^+$ was
+generated in four decay modes in equal amounts; these modes and their
+reconstruction are discussed in Section~\ref{sec:dataselection}.
+
+Tables~\ref{tab:samplesLamLam} and \ref{tab:samplesLamLamC} list the
+numbers of events in the analysis files for each sample, together with
+the luminosity-scaling weights.
+
+\input{generated_table_samples_Lam0Lam0}
+
+\input{generated_table_samples_Lam0LamC}
+
+\subsection{Blinding region definitions and verification}
+\label{sec:blinding}
+
+The signal region is defined in the \mes/\DeltaE\ plane as
+%
+\begin{eqnarray}
+    \LamLamSigMesLo < & \mes & < \LamLamSigMesHi~\gevcc \nonumber \\
+    \LamLamSigDeltaELo < & \DeltaE & < \LamLamSigDeltaEHi~{\rm GeV},
+\end{eqnarray}
+%
+for both channels, within the fitting region
+$\LamLamFitMesLo < \mes < \LamLamFitMesHi~\gevcc$,
+$\LamLamFitDeltaELo < \DeltaE < \LamLamFitDeltaEHi$~GeV.
+These windows are inherited from the $\bar{p}\Lambda^0$ analysis and are
+deliberately conservative; the final per-channel windows will be fixed
+before any optimization uses collision data near the signal region.
+
+The collision-data files used in this analysis were blinded upstream:
+candidates in the signal region were removed before the parquet files
+were produced. The analysis code verifies this every time the data are
+processed. At present the number of collision-data candidates in the
+signal region is \LamLamNDataCandSignalRegion\ for
+$\Bz \rightarrow \Lambda^0\Lambda^0$ and
+\LamLamCNDataCandSignalRegion\ for
+$\Bu \rightarrow \Lambda_c^+\Lambda^0$, as required.
+Figure~\ref{fig:blinded_data} shows the blinded collision data in the
+\mes/\DeltaE\ plane for both channels, with the assumed signal window
+superimposed; the blinded (empty) box fully covers the assumed window.
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.49\textwidth]{figures/Lam0Lam0/mes_vs_de_data_blinded.png}
+    \includegraphics[width=0.49\textwidth]{figures/Lam0LamC/mes_vs_de_data_blinded.png}
+    \caption{Blinded collision data in the \mes/\DeltaE\ plane for
+    $\Bz \rightarrow \Lambda^0\Lambda^0$ (left) and
+    $\Bu \rightarrow \Lambda_c^+\Lambda^0$ (right). The white dashed box
+    is the assumed signal region; the yellow dashed boxes are the
+    \DeltaE\ sidebands to be used later for background estimation. No
+    candidates appear in the signal region.}
+    \label{fig:blinded_data}
+\end{figure}

@@ -1,0 +1,4 @@
+# Figures in the BAD are committed so the document always builds, but we
+# never want git to diff or merge them by content -- they are regenerated
+# wholesale by the analysis notebooks + copy_plots_to_BAD.sh.
+BAD_2Lambda/figures/** binary

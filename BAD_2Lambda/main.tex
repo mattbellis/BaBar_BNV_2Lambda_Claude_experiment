@@ -18,8 +18,9 @@
 
 
 % Set the following numbers to the correct values for your paper
-%\newcommand{\BaBarNumber}     {{\texttt\pounds}{\texttt\pounds}, version 1 \textbf{DRAFT}} 
-\newcommand{\BaBarNumber}     {\#2723, version 5} 
+%\newcommand{\BaBarNumber}     {{\texttt\pounds}{\texttt\pounds}, version 1 \textbf{DRAFT}}
+% BAD number TBD (template inherited from BAD #2723, the B+ -> p Lambda0 analysis)
+\newcommand{\BaBarNumber}     {\#TBD, version 0.1 \textbf{DRAFT}}
 \newcommand{\BABARPubYear}    {19}
 \newcommand{\BABARPubNumber}  {00}
 \newcommand{\BABARConfNumber} {00}
@@ -28,6 +29,11 @@
 
 % Input the symbols file
 \input babarsym.tex
+
+% Auto-generated numbers (from results/<channel>.yaml -- see
+% BNV_2Lambda_analysis/generate_latex_macros.py). Never hand-type
+% analysis numbers; use these macros.
+\input{generated_numbers}
 
 % use and tweak the 'url' package to produce nicely formatted URLs 
 \usepackage{fullpage}
@@ -64,10 +70,10 @@
 
 % Title of the paper
 \begin{center}
-    \LARGE \bf \boldmath A search for baryon-number violating decays in 
+    \LARGE \bf \boldmath Searches for the baryon-number violating decays
     $\Bz \rightarrow \Lambda^0 \Lambda^0$
     and
-    $\Bz \rightarrow \Lambda^0 \Lambda^+_c$
+    $\Bu \rightarrow \Lambda_c^+ \Lambda^0$
 
 \end{center}
 \bigskip
@@ -93,19 +99,17 @@
 \begin{center}
 \begin{abstract}
 
-Searches for $B$ mesons decaying to final states containing
-two baryons,
-%where the baryon is
-%either a proton or neutron and the lepton is
-%a muon,  electron, or neutrino. 
-specifically a proton and a $\Lambda^0$.
-These decays violate baryon number by $\pm$2, depending
-on the charge-conjugation,
+We search for $B$ mesons decaying to final states containing
+two baryons: $\Bz \rightarrow \Lambda^0 \Lambda^0$ and
+$\Bu \rightarrow \Lambda_c^+ \Lambda^0$ (charge conjugation implied).
+These decays violate baryon number by $\pm 2$
 and would be a signature of physics beyond the standard model.
-No significant signal is observed 
-and the upper limit 
-is set on the branching fractions at the 90\% confidence level
-of $6.1 \times 10^{-8}$.
+The searches use the full \babar\ dataset and follow the strategy of the
+completed $\Bu \rightarrow \bar{p} \Lambda^0$ analysis (BAD \#2723):
+a blind analysis in the \mes/\DeltaE\ plane with upper limits computed
+using a Rolke-style procedure.
+\textbf{[DRAFT: analysis in progress; the collision-data signal regions
+remain blinded.]}
 \end{abstract}
 \end{center}
 
