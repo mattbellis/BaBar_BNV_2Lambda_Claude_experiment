@@ -91,4 +91,28 @@ stage01:
       - 1.1186829999999999
       flight_var: Lambda0postFitFlightSignificance
       flight_cut: 25.0
-  last_updated: '2026-07-22'
+  last_updated: '2026-07-25'
+stage02:
+  lambda0:
+    current_flight_cut: 25.0
+    current_mass_window:
+    - 1.112683
+    - 1.1186829999999999
+    recommended_flight_cut: 0.0
+    recommended_mass_window:
+    - 1.106183
+    - 1.125183
+    fom_at_recommended_flight_cut: 273.23638500879645
+    fom_at_recommended_mass_window: 298.18152244091243
+    flight_at_scan_boundary: true
+    mass_halfwidth_at_scan_boundary: true
+  multi_candidate_study:
+    n_signal_events: 44755
+    n_good_B_distribution:
+      0: 361
+      1: 44106
+      2: 288
+    frac_zero_good_B: 0.008066137861691431
+    frac_one_good_B: 0.9854988269467099
+    frac_multi_good_B: 0.006435035191598704
+  last_updated: '2026-07-25'

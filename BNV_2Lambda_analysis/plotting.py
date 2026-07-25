@@ -320,3 +320,69 @@ def plot_mes_vs_DeltaE(mes, DeltaE, config, draw_signal_region=False, draw_sideb
 
     return d
 ################################################################################
+
+################################################################################
+# Stage 2: purity-optimization scan / fit plots
+################################################################################
+def plot_fom_scan(df, xcol, chosen_x=None, xlabel='cut value', title=None, ax=None):
+    """
+    Standard 3-panel view of a purity_optimization scan DataFrame (S, B vs.
+    the scanned variable; and the FOM itself), with the chosen operating
+    point marked.
+    """
+    if ax is None:
+        fig, ax = plt.subplots(1, 3, figsize=(13, 3.5))
+
+    ax[0].plot(df[xcol], df['S'], 'o-', label='S (sig. MC, sideband-sub.)')
+    ax[0].plot(df[xcol], df['B'], 's-', label='B (bkg MC, sideband est.)')
+    ax[0].set_xlabel(xlabel)
+    ax[0].set_ylabel('weighted counts')
+    ax[0].legend(fontsize=8)
+
+    ax[1].plot(df[xcol], df['fom'], 'o-', color='tab:green')
+    ax[1].set_xlabel(xlabel)
+    ax[1].set_ylabel(r'FOM $= S/\sqrt{S+B}$')
+
+    if 'sig_eff' in df.columns:
+        ax[2].plot(df[xcol], df['sig_eff'], 'o-', color='tab:purple')
+        ax[2].set_xlabel(xlabel)
+        ax[2].set_ylabel('signal efficiency')
+    else:
+        ax[2].plot(df['B'], df['S'], 'o-', color='tab:gray')
+        ax[2].set_xlabel('B')
+        ax[2].set_ylabel('S')
+
+    if chosen_x is not None:
+        for a in ax:
+            a.axvline(chosen_x, color='k', linestyle='--', linewidth=1)
+
+    if title is not None:
+        plt.suptitle(title)
+    plt.tight_layout()
+
+################################################################################
+def plot_mass_fit(fit, hist_def=None, title=None, ax=None):
+    """
+    Binned mass distribution with the Gaussian-plus-linear-background fit
+    overlaid, from purity_optimization.fit_mass_peak's return dict.
+    """
+    if ax is None:
+        plt.figure(figsize=(5, 3.5))
+        ax = plt.gca()
+    plt.sca(ax)
+
+    width = fit['bin_centers'][1] - fit['bin_centers'][0]
+    ax.bar(fit['bin_centers'], fit['bin_counts'], width=width, alpha=0.5, label='signal MC')
+
+    if fit['converged']:
+        ax.plot(fit['bin_centers'], fit['fit_curve'], 'r-', linewidth=1.5,
+                label=fr"$\mu$={fit['mu']*1000:.1f} MeV, $\sigma$={fit['sigma']*1000:.1f} MeV")
+    else:
+        ax.text(0.05, 0.9, 'fit did not converge', color='r', transform=ax.transAxes)
+
+    ax.set_xlabel(hist_def['label'] if hist_def is not None else 'mass [GeV/c$^2$]')
+    ax.set_ylabel('entries / bin')
+    ax.legend(fontsize=8)
+    if title is not None:
+        ax.set_title(title)
+################################################################################

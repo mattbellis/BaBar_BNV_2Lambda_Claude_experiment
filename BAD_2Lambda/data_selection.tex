@@ -197,3 +197,146 @@ as the background estimate is taken from data sidebands.
     $\Bu \rightarrow \Lambda_c^+\Lambda^0$.}
     \label{fig:eventshape_LamLamC}
 \end{figure}
+
+\subsection{$\Lambda^0$, $K_S^0$, and $\Lambda_c^+$ purity optimization
+(Stage 2)\label{sec:stage2purity}}
+
+All numbers and figures in this section use MC only (signal and
+luminosity-weighted background) -- no collision data is examined, per the
+blinding policy. The composite mass windows are re-optimized per channel
+(rather than simply reused from the $\bar{p}\Lambda^0$ analysis) with an
+$S/\sqrt{S+B}$ figure of merit: $S$ is the sideband-subtracted signal-MC
+yield in the mass-peak window, and $B$ is the sideband-estimated background
+from luminosity-weighted background MC, where the sideband bands are
+contiguous with the peak window and have the same width as the peak. For
+each composite ($\Lambda^0$, and, for $\Bu \rightarrow \Lambda_c^+\Lambda^0$,
+$K_S^0$) the flight-significance cut is scanned first at the current mass
+window, then the mass half-width is scanned with that flight cut applied.
+$K_S^0$ is optimized \emph{before} $\Lambda_c^+$: it is a daughter of the
+$\Lambda_c^+$ in decay modes 2 and 3, so its cut is fixed first and applied
+as a gate (a no-op for modes 1 and 4) before the $\Lambda_c^+$ per-mode
+windows are set. Recommended values that showed a genuine interior FOM
+maximum have been applied to the analysis configuration (noted below as
+each is discussed); values whose scan hit the edge of the scanned range
+have not been, pending the methodology fix discussed below.
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/Lam0Lam0/lambda0_flight_scan.png}
+    \includegraphics[width=0.99\textwidth]{figures/Lam0LamC/lambda0_flight_scan.png}
+    \caption{$\Lambda^0$ flight-significance $S/\sqrt{S+B}$ scan (mass
+    window fixed at the current default) for $\Bz \rightarrow
+    \Lambda^0\Lambda^0$ (top) and $\Bu \rightarrow \Lambda_c^+\Lambda^0$
+    (bottom); the dashed line marks the scanned maximum.}
+    \label{fig:lambda0_flight_scan}
+\end{figure}
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/Lam0Lam0/lambda0_mass_scan.png}
+    \includegraphics[width=0.99\textwidth]{figures/Lam0LamC/lambda0_mass_scan.png}
+    \caption{$\Lambda^0$ mass-half-width $S/\sqrt{S+B}$ scan (flight cut
+    from Figure~\ref{fig:lambda0_flight_scan} applied), same channel
+    ordering.}
+    \label{fig:lambda0_mass_scan}
+\end{figure}
+
+For $\Bz \rightarrow \Lambda^0\Lambda^0$, the scanned optimum is
+$>\LamLamLamZeroRecFlightSigCut$ for the flight significance and
+$\pm\LamLamLamZeroRecMassWindowMeV$~MeV for the mass window; for
+$\Bu \rightarrow \Lambda_c^+\Lambda^0$, $>\LamLamCLamZeroRecFlightSigCut$
+and $\pm\LamLamCLamZeroRecMassWindowMeV$~MeV. \textbf{Both mass-window
+scans, and the $\Lambda^0\Lambda^0$-channel flight-significance scan, are
+at the edge of the scanned range} (Figures~\ref{fig:lambda0_flight_scan}
+and~\ref{fig:lambda0_mass_scan}): the FOM is monotonic across the entire
+grid rather than showing an interior maximum. The most likely explanation
+is that the input ntuples are already skimmed to a narrow band around the
+$\Lambda^0$ mass, so the sideband bands run out of background before the
+scan range does, which biases $S/\sqrt{S+B}$ toward the widest/loosest
+setting available rather than reflecting the true purity/efficiency
+trade-off. The $\Lambda_c^+\Lambda^0$-channel $\Lambda^0$
+flight-significance scan, by contrast, shows a genuine interior maximum at
+$\LamLamCLamZeroRecFlightSigCut$ (Figure~\ref{fig:lambda0_flight_scan},
+bottom) -- close to the $\bar{p}\Lambda^0$ default of 25 -- which is
+evidence that the sideband method itself is sound, and \textbf{this value
+has been applied} to \texttt{channel\_config.py}. The boundary-hugging cases
+(both mass-window scans, and the $\Lambda^0\Lambda^0$-channel
+flight-significance scan) have \textbf{not} been applied -- they remain at
+the $\bar{p}\Lambda^0$ defaults pending either a wider mass-window scan
+range or a methodology change (e.g.\ restricting the scan to candidates
+already in the \mes/\DeltaE\ fitting region). \textbf{This is flagged for
+review, not yet resolved.}
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Lam0LamC/k0s_flight_scan.png}
+    \includegraphics[width=0.85\textwidth]{figures/Lam0LamC/k0s_mass_scan.png}
+    \caption{$K_S^0$ flight-significance (top) and mass-half-width (bottom)
+    $S/\sqrt{S+B}$ scans, $\Bu \rightarrow \Lambda_c^+\Lambda^0$ channel.}
+    \label{fig:k0s_scan}
+\end{figure}
+
+The $K_S^0$ scan (Figure~\ref{fig:k0s_scan}) shows the mirror-image
+pattern: the mass-window scan gives an interior optimum of
+$\pm\LamLamCKZeroRecMassWindowMeV$~MeV (consistent with the pre-fit $K_S^0$
+mass resolution of order 8~MeV noted in Stage 1), which \textbf{has been
+applied}; the flight-significance scan again hugs the scan boundary
+($>\LamLamCKZeroRecFlightSigCut$) and has \textbf{not} been applied,
+remaining at the Stage 1 placeholder pending the same methodology fix.
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/Lam0LamC/lambdac_mode_mass_fits.png}
+    \caption{Per-mode $\Lambda_c^+$ mass fit (Gaussian + linear background,
+    signal MC, recommended $K_S^0$ gate applied to modes 2 and 3).}
+    \label{fig:lambdac_mode_fits}
+\end{figure}
+
+Unlike $\Lambda^0$ and $K_S^0$, the $\Lambda_c^+$ mass window is set from
+the fitted per-mode resolution rather than an $S/\sqrt{S+B}$ scan: the
+dominant ``background'' under the $\Lambda_c^+$ peak, even in signal MC
+alone, is wrong-candidate combinatorics from the same signal event (up to
+$\sim$60 $B$ candidates/event, Section~\ref{sec:lambdacmodes}), not a
+separate smooth background process that a sideband can characterize.
+Figure~\ref{fig:lambdac_mode_fits} shows the fit for each mode;
+Table~\ref{tab:lambdacmodefits} gives the numbers. The window is
+$\LamLamCLamCMassWindowNSigma\sigma$ around the fitted mean, chosen to keep
+the great majority of the (near-Gaussian) core while still rejecting the
+combinatorial tails visible in each panel; modes 2 and 4 (fewer or
+different daughters) have a visibly worse resolution than modes 1 and 3.
+\textbf{These four per-mode windows have been applied} to
+\texttt{channel\_config.py}. Figure~\ref{fig:lambdac_before_after_k0s} confirms the
+$\Lambda_c^+$ peak position and width in modes 2 and 3 are not meaningfully
+changed by the $K_S^0$ gate (its mass window applied, its flight cut still
+at the Stage 1 placeholder -- see above), so the sequential
+$K_S^0$-then-$\Lambda_c^+$ optimization order is not sensitive to that
+caveat.
+
+\input{generated_table_lambdac_mode_fits}
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Lam0LamC/lambdac_mass_before_after_k0s_gate.png}
+    \caption{$\Lambda_c^+$ mass, modes 2 and 3 only, before (left) and after
+    (right) the recommended $K_S^0$ gate.}
+    \label{fig:lambdac_before_after_k0s}
+\end{figure}
+
+Finally, Figure~\ref{fig:multicandidate} shows the number of $B$ candidates
+per signal-MC event with \emph{both} composite daughters passing their
+purity mask, after all cuts above (recommended values), for
+$\Bu \rightarrow \Lambda_c^+\Lambda^0$: $\LamLamCFracZeroGoodBPct\%$ of
+events have none, $\LamLamCFracOneGoodBPct\%$ have exactly one, and
+$\LamLamCFracMultiGoodBPct\%$ still have more than one. This is a large
+reduction in the multi-candidate rate from the Stage 1 baseline, but --
+per the Stage 1 open decision (Section~\ref{sec:lambdacmodes}) -- no
+candidate-selection policy is applied yet; that choice is deferred until
+after the PID and antibaryon-veto stages.
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figures/Lam0LamC/multi_candidate_study.png}
+    \caption{Number of good $B$ candidates per signal-MC event after all
+    Stage 2 purity cuts, $\Bu \rightarrow \Lambda_c^+\Lambda^0$.}
+    \label{fig:multicandidate}
+\end{figure}

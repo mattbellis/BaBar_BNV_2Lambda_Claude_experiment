@@ -21,6 +21,37 @@ import copy
 # PDG masses [GeV/c^2]
 LAMBDA0_MASS_PDG = 1.115683
 LAMBDAC_MASS_PDG = 2.28646
+K0S_MASS_PDG = 0.497611
+
+################################################################################
+# Stage 2 (Lambda/K_S purity) figure-of-merit configuration
+#
+# The Lambda0 and K_S0 mass-window + flight-significance cuts are optimized
+# with S/sqrt(S+B), where S is the (sideband-subtracted) signal-MC yield in
+# the mass-peak window and B is the sideband-estimated background under the
+# peak from luminosity-weighted background MC. The sideband bands are
+# contiguous with the peak window and each have the same width as the peak
+# (mirrors the B+ -> p Lambda0 reference purity study:
+# BNV_pLambda/Lambda_purity_studies.ipynb). This mirroring is what
+# 'FOM_SIDEBAND_WIDTH_MULT = 1.0' encodes: sideband width = 1x the (current,
+# possibly-scanned) peak full width, on each side.
+################################################################################
+FOM_SIDEBAND_WIDTH_MULT = 1.0
+
+def _lambdac_mode_window(mu, sigma, nsigma):
+    return [mu - nsigma * sigma, mu + nsigma * sigma]
+
+def _default_purity_scan_ranges():
+    """
+    Default flight-significance / mass-halfwidth scan grids for the Stage 2
+    FOM optimizations. Shared shape for Lambda0 (both channels) and K_S0
+    (Lam0LamC); values in GeV for the mass scan, dimensionless significance
+    units for the flight scan.
+    """
+    return {
+        'flight_scan': {'lo': 0.0, 'hi': 100.0, 'step': 2.0},
+        'mass_halfwidth_scan': {'lo': 0.001, 'hi': 0.010, 'step': 0.0005},
+    }
 
 ################################################################################
 # SP mode information, shared by both channels
@@ -143,9 +174,15 @@ CHANNELS['Lam0Lam0'] = {
         'Lambda0': {
             'n_required': 2,
             'mass_var': 'Lambda0_unc_Mass',
+            'mass_pdg': LAMBDA0_MASS_PDG,
             'mass_window': [LAMBDA0_MASS_PDG - 0.003, LAMBDA0_MASS_PDG + 0.003],
             'flight_var': 'Lambda0postFitFlightSignificance',
-            'flight_cut': 25.0,  # from p-Lambda0; to be re-optimized in Stage 2
+            # Stage 2 S/sqrt(S+B) scan: BOTH the flight-cut and mass-window
+            # optima hit the edge of their scanned ranges for this channel
+            # (see STATUS.md open issue) -- neither is applied; stays at
+            # the p-Lambda0 default pending that fix.
+            'flight_cut': 25.0,
+            **_default_purity_scan_ranges(),
         },
     },
 
@@ -167,10 +204,29 @@ CHANNELS['Lam0LamC'] = {
         'LambdaC': {
             'n_required': 1,
             'mass_var': 'LambdaC_unc_Mass',
-            # Placeholder window; to be set from purity studies in Stage 2
-            'mass_window': [LAMBDAC_MASS_PDG - 0.010, LAMBDAC_MASS_PDG + 0.010],
-            # LambdaC flies ~60 um -- no flight-significance cut foreseen;
-            # decide in Stage 2 (note: no LambdaCpostFitFlightSignificance
+            'mass_pdg': LAMBDAC_MASS_PDG,
+            # Stage 2 (run_stage02.py): Gaussian+linear-background fit to
+            # each mode's signal-MC mass peak (K_S0 gate applied to modes
+            # 2/3), mass_window_nsigma * sigma around the fitted mean.
+            # Applied 2026-07-24 -- see results/Lam0LamC.yaml (stage02) and
+            # the Stage 2 BAD section for the fit plots/justification.
+            'mass_windows_per_mode': {
+                1: _lambdac_mode_window(2.284779, 0.004209, nsigma=3.0),
+                2: _lambdac_mode_window(2.284868, 0.004958, nsigma=3.0),
+                3: _lambdac_mode_window(2.284978, 0.004265, nsigma=3.0),
+                4: _lambdac_mode_window(2.285011, 0.005228, nsigma=3.0),
+            },
+            # Width of the per-mode windows, in units of the fitted mode
+            # resolution sigma; see the Stage 2 BAD section for the
+            # efficiency/purity justification of this choice.
+            'mass_window_nsigma': 3.0,
+            # Generic-composite fallback (Stage 1 snapshot / any code that
+            # still expects a single flat window): envelope of the per-mode
+            # windows above. The mode-aware mask in cutflow.py never uses
+            # this; it is derived, not authoritative.
+            'mass_window': None,  # filled in below, after the dict literal
+            # LambdaC flies ~60 um -- no flight-significance cut planned;
+            # decided in Stage 2 (note: no LambdaCpostFitFlightSignificance
             # branch exists, only LambdaCFlightLen/LambdaCFlightErr)
             'flight_var': None,
             'flight_cut': None,
@@ -178,15 +234,54 @@ CHANNELS['Lam0LamC'] = {
         'Lambda0': {
             'n_required': 1,
             'mass_var': 'Lambda0_unc_Mass',
+            'mass_pdg': LAMBDA0_MASS_PDG,
             'mass_window': [LAMBDA0_MASS_PDG - 0.003, LAMBDA0_MASS_PDG + 0.003],
             'flight_var': 'Lambda0postFitFlightSignificance',
-            'flight_cut': 25.0,  # from p-Lambda0; to be re-optimized in Stage 2
+            # Stage 2 S/sqrt(S+B) scan gave a clean interior optimum at 18
+            # (close to the p-Lambda0 default of 25; FOM 321 vs. 273 at 25)
+            # -- applied 2026-07-24. The mass-window scan for this composite
+            # hit the edge of its scanned range (see STATUS.md open issue),
+            # so that value is NOT applied; mass_window stays at the
+            # p-Lambda0 default above pending that fix.
+            'flight_cut': 18.0,
+            **_default_purity_scan_ranges(),
         },
+    },
+
+    # K_S0 (daughter of LambdaC in modes 2 and 3 only). Not a B_daughter, so
+    # it lives outside 'composites'; the mode-conditional link back to the
+    # LambdaC candidate that owns it is built in cutflow.get_lambdac_ks_info.
+    'k0s': {
+        'mass_var': 'K_SpreFitMass',
+        'mass_pdg': K0S_MASS_PDG,
+        # Stage 2 S/sqrt(S+B) scan gave a clean interior optimum at +/-26
+        # MeV (consistent with the ~7.8 MeV pre-fit resolution noted in
+        # Stage 1) -- applied 2026-07-24.
+        'mass_window': [K0S_MASS_PDG - 0.026, K0S_MASS_PDG + 0.026],
+        'flight_var': 'K_SpostFitFlightSignificance',
+        # The flight-significance scan hit the edge of its scanned range
+        # (see STATUS.md open issue) -- NOT applied; stays at the Stage 1
+        # placeholder pending that fix.
+        'flight_cut': 5.0,
+        'flight_scan': {'lo': 0.0, 'hi': 100.0, 'step': 2.0},
+        # Wider than the shared default: K_SpreFitMass resolution is ~7.8
+        # MeV (STATUS.md), so 3 sigma ~ 23 MeV -- the scan needs to cover
+        # past that to see the FOM turn over.
+        'mass_halfwidth_scan': {'lo': 0.002, 'hi': 0.030, 'step': 0.001},
     },
 
     'region_definitions': _default_region_definitions(),
     'hist_defs': dict(COMMON_HIST_DEFS),
 }
+
+# Derived fallback: LambdaC's flat 'mass_window' is the envelope of its
+# per-mode windows (generic consumers only; see comment above).
+_lamc_mode_windows = CHANNELS['Lam0LamC']['composites']['LambdaC']['mass_windows_per_mode']
+CHANNELS['Lam0LamC']['composites']['LambdaC']['mass_window'] = [
+    min(w[0] for w in _lamc_mode_windows.values()),
+    max(w[1] for w in _lamc_mode_windows.values()),
+]
+del _lamc_mode_windows
 
 # LambdaC-specific histograms
 CHANNELS['Lam0LamC']['hist_defs']['LambdaC_unc_Mass'] = \

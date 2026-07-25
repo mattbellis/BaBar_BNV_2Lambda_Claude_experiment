@@ -150,15 +150,15 @@ def get_signal_region_mask(data, config):
     return signal_mask
 
 ################################################################################
-# Composite (Lambda0 / LambdaC) purity masks
+# Composite (Lambda0 / LambdaC / K_S0) purity masks
 ################################################################################
-def get_composite_purity_mask(data, config, name):
+def get_purity_mask_for_comp(data, comp):
     """
-    Candidate mask for one composite species ('Lambda0' or 'LambdaC'):
-    mass window AND flight-significance cut (where configured).
+    Candidate mask for one composite-config dict {mass_var, mass_window,
+    flight_var, flight_cut}: mass window AND flight-significance cut (where
+    configured). Takes the raw comp dict rather than a channel + name so it
+    also serves 'k0s', which lives outside config['composites'].
     """
-    comp = config['composites'][name]
-
     lo, hi = comp['mass_window']
     m = data[comp['mass_var']]
     mask = (m > lo) & (m < hi)
@@ -167,6 +167,19 @@ def get_composite_purity_mask(data, config, name):
         mask = mask & (data[comp['flight_var']] > comp['flight_cut'])
 
     return mask
+
+################################################################################
+def get_composite_purity_mask(data, config, name):
+    """
+    Candidate mask for one composite species by name ('Lambda0' or
+    'LambdaC'). LambdaC is mode-dependent (see get_lambdac_purity_mask) and
+    is dispatched there automatically; Lambda0 uses the generic mass+flight
+    mask.
+    """
+    if name == 'LambdaC' and 'mass_windows_per_mode' in config['composites'][name]:
+        return get_lambdac_purity_mask(data, config)
+
+    return get_purity_mask_for_comp(data, config['composites'][name])
 
 ################################################################################
 def get_all_composite_purity_masks(data, config):
@@ -190,6 +203,104 @@ def get_all_composite_purity_masks(data, config):
         mask_event = ev if mask_event is None else (mask_event & ev)
 
     return mask_event, candidate_masks
+
+################################################################################
+# K_S0 <-> LambdaC linkage and mode-dependent LambdaC purity (Lam0LamC only)
+################################################################################
+def get_lambdac_ks_info(data):
+    """
+    For each LambdaC candidate, find its K_S0 daughter (present only in
+    modes 2 and 3): checks all four daughter slots for |Lund| == 310 (the
+    K_S0 code), mirroring how the mode-4 Lambda0 daughter is picked out via
+    LambdaCd1Lund in datasets.add_derived_fields.
+
+    Returns (has_ks, ks_idx): jagged bool / int arrays aligned with the
+    LambdaC collection. ks_idx is only meaningful where has_ks is True (it
+    defaults to 0, a placeholder index, elsewhere).
+    """
+    K_S_LUND = 310
+
+    has_ks = ak.zeros_like(data['LambdaCnDaus'], dtype=bool)
+    ks_idx = ak.zeros_like(data['LambdaCd1Idx'])
+
+    for i in (1, 2, 3, 4):
+        d_lund = abs(data[f'LambdaCd{i}Lund'])
+        d_idx = data[f'LambdaCd{i}Idx']
+
+        sel = (d_lund == K_S_LUND)
+        has_ks = has_ks | sel
+        ks_idx = ak.where(sel, d_idx, ks_idx)
+
+    return has_ks, ks_idx
+
+################################################################################
+def get_lambdac_k0s_gate(data, config):
+    """
+    Jagged mask aligned with the LambdaC collection: True if this LambdaC
+    candidate has no K_S0 daughter (modes 1, 4 -- the cut does not apply),
+    or has one that passes the K_S0 purity cut (modes 2, 3).
+    """
+    has_ks, ks_idx = get_lambdac_ks_info(data)
+
+    # ks_idx defaults to placeholder 0 where has_ks is False; events with
+    # zero K_S candidates at all would make ks_purity[ks_idx] an out-of-range
+    # gather in that case. Pad every event's K_S purity list to length >= 1
+    # (with False) so index 0 always exists; its value is never used where
+    # has_ks is False (short-circuited by the `~has_ks |` below).
+    ks_purity = get_purity_mask_for_comp(data, config['k0s'])
+    ks_purity = ak.fill_none(ak.pad_none(ks_purity, 1, axis=1), False)
+
+    return (~has_ks) | (has_ks & ks_purity[ks_idx])
+
+################################################################################
+def get_lambdac_mode_mass_window_mask(data, config):
+    """
+    Jagged mask aligned with the LambdaC collection: mass within the
+    per-mode window from config['composites']['LambdaC']['mass_windows_per_mode'].
+    """
+    mode = get_lambdac_decay_mode(data)
+    mass = data[config['composites']['LambdaC']['mass_var']]
+    windows = config['composites']['LambdaC']['mass_windows_per_mode']
+
+    mask = ak.zeros_like(mode, dtype=bool)
+    for m, (lo, hi) in windows.items():
+        mask = mask | ((mode == m) & (mass > lo) & (mass < hi))
+
+    return mask
+
+################################################################################
+def get_lambdac_purity_mask(data, config):
+    """
+    Full Stage 2 LambdaC purity mask (jagged, aligned with the LambdaC
+    collection): per-mode mass window AND the K_S0 gate (sequential
+    optimization -- the K_S0 cut is fixed first, then the LambdaC windows
+    are set with it applied; see run_stage02.py).
+    """
+    return get_lambdac_mode_mass_window_mask(data, config) & get_lambdac_k0s_gate(data, config)
+
+################################################################################
+# Per-B purity mask (all composite daughters pass their purity cuts)
+################################################################################
+def get_composite_purity_masks_per_B(data, config, candidate_masks=None):
+    """
+    Jagged mask aligned with the B collection: True if every composite
+    daughter of that B candidate passes its purity mask. This is the
+    per-candidate building block later stages (PID, antibaryon veto, MLP)
+    reuse; get_all_composite_purity_masks's event-level count is a coarser
+    summary that does not check the daughters belong to the *same* B.
+
+    candidate_masks: optional pre-computed {name: jagged mask} (e.g. from
+    get_all_composite_purity_masks), to avoid recomputing.
+    """
+    if candidate_masks is None:
+        _, candidate_masks = get_all_composite_purity_masks(data, config)
+
+    mask_b = None
+    for name, idxvar in config['B_daughters']:
+        dmask = candidate_masks[name][data[idxvar]]
+        mask_b = dmask if mask_b is None else (mask_b & dmask)
+
+    return mask_b
 
 ################################################################################
 # Diagnostic cuts for the early-stage notebooks

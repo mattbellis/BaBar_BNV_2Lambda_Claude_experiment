@@ -87,8 +87,8 @@ stage01:
     LambdaC:
       n_required: 1
       mass_window:
-      - 2.27646
-      - 2.2964599999999997
+      - 2.269327
+      - 2.3006949999999997
       flight_var: null
       flight_cut: null
     Lambda0:
@@ -97,7 +97,7 @@ stage01:
       - 1.112683
       - 1.1186829999999999
       flight_var: Lambda0postFitFlightSignificance
-      flight_cut: 25.0
+      flight_cut: 18.0
   lambdac_mode_fractions:
     no_cut:
       1: 0.3171072975185219
@@ -108,4 +108,109 @@ stage01:
       1: 0.3996904186305372
       2: 0.4105431587735012
       3: 0.18976642259596152
-  last_updated: '2026-07-22'
+  last_updated: '2026-07-25'
+stage02:
+  lambda0:
+    current_flight_cut: 18.0
+    current_mass_window:
+    - 1.112683
+    - 1.1186829999999999
+    recommended_flight_cut: 18.0
+    recommended_mass_window:
+    - 1.106183
+    - 1.125183
+    fom_at_recommended_flight_cut: 321.0892803696687
+    fom_at_recommended_mass_window: 356.9270649717484
+    flight_at_scan_boundary: false
+    mass_halfwidth_at_scan_boundary: true
+  k0s:
+    current_flight_cut: 5.0
+    current_mass_window:
+    - 0.471611
+    - 0.523611
+    recommended_flight_cut: 0.0
+    recommended_mass_window:
+    - 0.471611
+    - 0.523611
+    fom_at_recommended_flight_cut: 241.72505041885915
+    fom_at_recommended_mass_window: 241.72505041885915
+    flight_at_scan_boundary: true
+    mass_halfwidth_at_scan_boundary: false
+  lambdac_mode_fits:
+    1:
+      mu: 2.284779479622281
+      sigma: 0.004209119838298162
+      converged: true
+      n_candidates: 42481
+    2:
+      mu: 2.28486774752779
+      sigma: 0.004957776877140483
+      converged: true
+      n_candidates: 32687
+    3:
+      mu: 2.2849776012998615
+      sigma: 0.0042645591954023395
+      converged: true
+      n_candidates: 31209
+    4:
+      mu: 2.285011321577432
+      sigma: 0.005228439310013343
+      converged: true
+      n_candidates: 32372
+  lambdac_mode_fits_k0s_gated:
+    1:
+      mu: 2.284779479622281
+      sigma: 0.004209119838298162
+      converged: true
+      n_candidates: 42481
+    2:
+      mu: 2.28486774752779
+      sigma: 0.004957776877140483
+      converged: true
+      n_candidates: 32687
+    3:
+      mu: 2.2849776012998615
+      sigma: 0.0042645591954023395
+      converged: true
+      n_candidates: 31209
+    4:
+      mu: 2.285011321577432
+      sigma: 0.005228439310013343
+      converged: true
+      n_candidates: 32372
+  lambdac_mass_window_nsigma: 3.0
+  lambdac_recommended_windows_per_mode:
+    1:
+    - 2.2721521201073864
+    - 2.2974068391371754
+    2:
+    - 2.2699944168963686
+    - 2.2997410781592116
+    3:
+    - 2.2721839237136545
+    - 2.2977712788860685
+    4:
+    - 2.269326003647392
+    - 2.300696639507472
+  multi_candidate_study:
+    n_signal_events: 112491
+    n_good_B_distribution:
+      0: 18322
+      1: 84856
+      2: 7393
+      3: 1273
+      4: 395
+      5: 138
+      6: 52
+      7: 35
+      8: 11
+      9: 5
+      10: 6
+      11: 2
+      12: 1
+      15: 1
+      24: 1
+    frac_zero_good_B: 0.16287525224240162
+    frac_one_good_B: 0.7543359024277497
+    frac_multi_good_B: 0.0827888453298486
+  last_updated: '2026-07-25'

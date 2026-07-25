@@ -11,26 +11,23 @@ BaBar_BNV_2Lambda_Claude_experiment/
 ├── data/                     # parquet files (NOT in git)
 │   ├── Background_and_signal_SP_modes_All_runs_<channel>.parquet
 │   └── Data_All_runs_<channel>_BLINDED.parquet
-├── results/                  # results/<channel>.yaml -- single source of
-│                             #   truth for all analysis numbers (in git)
 ├── BNV_pLambda/              # completed p-Lambda0 analysis -- REFERENCE ONLY
 ├── BNV_2Lambda_analysis/     # the new analyses (this is where work happens)
 │   ├── channel_config.py     # per-channel config: single source of truth
 │   ├── datasets.py           # loading parquet files, MC scaling weights
 │   ├── cutflow.py            # mask/cut builders and cutflow tables
+│   ├── purity_optimization.py # Stage 2: S/sqrt(S+B) scans, LambdaC mode-fit
 │   ├── plotting.py           # histogram creation/filling, standard plots
-│   ├── results_io.py         # read/write results/<channel>.yaml
-│   ├── run_stage01.py        # Stage 0/1 numbers -> results yaml
-│   ├── generate_latex_macros.py  # results yaml -> BAD macros + tables
-│   ├── copy_plots_to_BAD.sh  # notebook plots -> BAD_2Lambda/figures/
+│   ├── run_stage01.py        # Stage 0/1: load + diagnostics -> results/<channel>.yaml
+│   ├── run_stage02.py        # Stage 2: purity optimization -> results/<channel>.yaml
+│   ├── generate_latex_macros.py # results/<channel>.yaml -> BAD_2Lambda/generated_*.tex
 │   ├── dataset_statistics.csv           # run/skim statistics (from p-Lambda0)
 │   ├── SP_cross_sections_and_labels.csv # SP-mode cross sections (from p-Lambda0)
 │   └── notebooks/
-│       └── 01_load_and_diagnostics.ipynb
-└── BAD_2Lambda/              # the analysis note (BAD); build with latexmk
-    ├── generated_numbers.tex     # AUTO-GENERATED -- do not edit
-    ├── generated_table_*.tex     # AUTO-GENERATED -- do not edit
-    └── figures/                  # plots copied in by copy_plots_to_BAD.sh
+│       ├── 01_load_and_diagnostics.ipynb
+│       └── 02_lambda_purity.ipynb
+├── results/                  # results/<channel>.yaml -- single source of truth for numbers
+└── BAD_2Lambda/              # the analysis note (BAD)
 ```
 
 `<channel>` is `Lam0Lam0` or `Lam0LamC`. Everything channel-specific
@@ -65,31 +62,47 @@ jupyter lab 01_load_and_diagnostics.ipynb
 - Review items are listed in the final "Observations / checkpoint summary"
   cell.
 
-### Stage 0/1 — results files and BAD numbers
+### Stage 2 — Lambda0 / K_S0 / LambdaC purity optimization
 
-All numbers quoted in the BAD come from `results/<channel>.yaml`, which is
-written by the per-stage scripts (never hand-typed into LaTeX). The full
-documentation chain is:
+Re-optimizes the $\Lambda^0$ (both channels) and $K_S^0$ (`Lam0LamC`) mass
+window + flight-significance cuts with an $S/\sqrt{S+B}$ scan, and fits the
+per-mode $\Lambda_c^+$ mass resolution (`Lam0LamC`) to set its per-mode mass
+windows. Uses MC only -- no collision data is read.
 
 ```
 cd BNV_2Lambda_analysis
+python run_stage02.py --channel Lam0Lam0
+python run_stage02.py --channel Lam0LamC
+python run_stage02.py --channel all       # both channels
+```
 
-# 1. Compute the Stage 0/1 numbers and write results/<channel>.yaml
-python run_stage01.py --channel all      # or --channel Lam0Lam0 / Lam0LamC
+- Writes recommended cut values, scan/fit numbers, and the multi-candidate
+  study (Lam0LamC only) to `results/<channel>.yaml` (section `stage02`).
+  It does **not** modify `channel_config.py` -- the recommended values are
+  printed for review and must be applied to `channel_config.py` by hand
+  (or ask Claude) once accepted at the checkpoint.
+- **Known issue (flagged, not yet resolved):** several of the flight-
+  significance and mass-halfwidth scans return a FOM optimum at the edge
+  of the scanned range rather than an interior maximum -- see the BAD
+  (`data_selection.tex`, Stage 2 section) and notebook 02's checkpoint
+  cell for details before trusting/applying those specific values.
+- For the plots and per-mode fit overlays:
+  ```
+  cd BNV_2Lambda_analysis/notebooks
+  jupyter lab 02_lambda_purity.ipynb
+  ```
+  Set `CHANNEL = 'Lam0Lam0'` or `'Lam0LamC'` in the second code cell, run
+  all cells top to bottom. Plots are written to
+  `BNV_2Lambda_analysis/notebooks/plots/<channel>/`.
 
-# 2. Regenerate the LaTeX macros + tables in BAD_2Lambda/
-python generate_latex_macros.py
+### Refreshing the BAD after any stage
 
-# 3. Copy the notebook plots into the BAD figures directory
-./copy_plots_to_BAD.sh
-
-# 4. Build the BAD
+```
+cd BNV_2Lambda_analysis
+python generate_latex_macros.py   # results/<channel>.yaml -> BAD_2Lambda/generated_*.tex
+./copy_plots_to_BAD.sh            # notebooks/plots/ -> BAD_2Lambda/figures/
 cd ../BAD_2Lambda
 latexmk -pdf main.tex
 ```
-
-Rerun steps 1-2 whenever the analysis (cuts, config, data) changes, and
-step 3 after rerunning the notebooks. The `generated_*.tex` files and
-`figures/` in `BAD_2Lambda/` are committed so the BAD always builds.
 
 *(Later stages will be added here as they are implemented.)*
