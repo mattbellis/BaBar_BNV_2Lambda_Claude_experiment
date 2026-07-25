@@ -214,3 +214,192 @@ stage02:
     frac_one_good_B: 0.7543359024277497
     frac_multi_good_B: 0.0827888453298486
   last_updated: '2026-07-25'
+stage03:
+  lambda0_pid:
+    ladders:
+      p:
+      - SuperLooseKMProtonSelection
+      - VeryLooseKMProtonSelection
+      - LooseKMProtonSelection
+      - TightKMProtonSelection
+      - VeryTightKMProtonSelection
+      - SuperTightKMProtonSelection
+      pi:
+      - SuperLooseKMPionMicroSelection
+      - VeryLooseKMPionMicroSelection
+      - LooseKMPionMicroSelection
+      - TightKMPionMicroSelection
+      - VeryTightKMPionMicroSelection
+      - SuperTightKMPionMicroSelection
+    recommended_selector:
+      p: SuperLooseKMProtonSelection
+      pi: SuperLooseKMPionMicroSelection
+    fom_at_recommended: 0.08238062909561325
+    sig_eff_at_recommended: 0.9676481496990943
+    bkg_weighted_at_recommended: 135.9700217682197
+    bkg_raw_mc_at_recommended: 333
+    at_scan_boundary:
+      p_selector_idx: true
+      pi_selector_idx: true
+    any_at_scan_boundary: true
+    low_mc_stats_at_recommended: false
+    fom_no_pid_at_all: 0.08110453625139842
+    bkg_weighted_no_pid_at_all: 150.02314374735624
+  lambdac_pid_per_mode:
+    1:
+      ladders:
+        K:
+        - SuperLooseKMKaonMicroSelection
+        - VeryLooseKMKaonMicroSelection
+        - LooseKMKaonMicroSelection
+        - TightKMKaonMicroSelection
+        - VeryTightKMKaonMicroSelection
+        - SuperTightKMKaonMicroSelection
+        p:
+        - SuperLooseKMProtonSelection
+        - VeryLooseKMProtonSelection
+        - LooseKMProtonSelection
+        - TightKMProtonSelection
+        - VeryTightKMProtonSelection
+        - SuperTightKMProtonSelection
+        pi:
+        - SuperLooseKMPionMicroSelection
+        - VeryLooseKMPionMicroSelection
+        - LooseKMPionMicroSelection
+        - TightKMPionMicroSelection
+        - VeryTightKMPionMicroSelection
+        - SuperTightKMPionMicroSelection
+      recommended_selector:
+        K: VeryLooseKMKaonMicroSelection
+        p: TightKMProtonSelection
+        pi: SuperLooseKMPionMicroSelection
+      fom_at_recommended: 0.43847169548054815
+      sig_eff_at_recommended: 0.9029390351381384
+      bkg_weighted_at_recommended: 2.2406626925696704
+      bkg_raw_mc_at_recommended: 6
+      at_scan_boundary:
+        p_selector_idx: false
+        K_selector_idx: false
+        pi_selector_idx: true
+      any_at_scan_boundary: true
+      low_mc_stats_at_recommended: false
+    2:
+      ladders:
+        p:
+        - SuperLooseKMProtonSelection
+        - VeryLooseKMProtonSelection
+        - LooseKMProtonSelection
+        - TightKMProtonSelection
+        - VeryTightKMProtonSelection
+        - SuperTightKMProtonSelection
+      recommended_selector:
+        p: LooseKMProtonSelection
+      fom_at_recommended: 0.44917206508784946
+      sig_eff_at_recommended: 0.9261025029797377
+      bkg_weighted_at_recommended: 2.2510150094825905
+      bkg_raw_mc_at_recommended: 8
+      at_scan_boundary:
+        p_selector_idx: false
+      any_at_scan_boundary: false
+      low_mc_stats_at_recommended: false
+    3:
+      ladders:
+        p:
+        - SuperLooseKMProtonSelection
+        - VeryLooseKMProtonSelection
+        - LooseKMProtonSelection
+        - TightKMProtonSelection
+        - VeryTightKMProtonSelection
+        - SuperTightKMProtonSelection
+        pi:
+        - SuperLooseKMPionMicroSelection
+        - VeryLooseKMPionMicroSelection
+        - LooseKMPionMicroSelection
+        - TightKMPionMicroSelection
+        - VeryTightKMPionMicroSelection
+        - SuperTightKMPionMicroSelection
+      recommended_selector:
+        p: SuperTightKMProtonSelection
+        pi: SuperLooseKMPionMicroSelection
+      fom_at_recommended: 0.41852341541589205
+      sig_eff_at_recommended: 0.8869685883688659
+      bkg_weighted_at_recommended: 2.491350600118454
+      bkg_raw_mc_at_recommended: 7
+      at_scan_boundary:
+        p_selector_idx: true
+        pi_selector_idx: true
+      any_at_scan_boundary: true
+      low_mc_stats_at_recommended: false
+    4:
+      ladders:
+        pi:
+        - SuperLooseKMPionMicroSelection
+        - VeryLooseKMPionMicroSelection
+        - LooseKMPionMicroSelection
+        - TightKMPionMicroSelection
+        - VeryTightKMPionMicroSelection
+        - SuperTightKMPionMicroSelection
+      recommended_selector:
+        pi: SuperLooseKMPionMicroSelection
+      fom_at_recommended: 0.2631685103758347
+      sig_eff_at_recommended: 0.9555086102042123
+      bkg_weighted_at_recommended: 11.182608829022513
+      bkg_raw_mc_at_recommended: 26
+      at_scan_boundary:
+        pi_selector_idx: true
+      any_at_scan_boundary: true
+      low_mc_stats_at_recommended: false
+  multi_candidate_study:
+    n_signal_events: 112491
+    n_good_B_distribution:
+      0: 36495
+      1: 70366
+      2: 4738
+      3: 623
+      4: 181
+      5: 51
+      6: 18
+      7: 11
+      8: 2
+      9: 2
+      10: 2
+      11: 1
+      20: 1
+    frac_zero_good_B: 0.32442595407632613
+    frac_one_good_B: 0.6255255976033638
+    frac_multi_good_B: 0.05004844832031007
+    n_good_LambdaC_distribution:
+      0: 21725
+      1: 83995
+      2: 5672
+      3: 773
+      4: 218
+      5: 59
+      6: 26
+      7: 13
+      8: 4
+      9: 1
+      10: 2
+      11: 1
+      12: 1
+      20: 1
+    n_good_B_by_lambdac_mode:
+      1: 24352
+      2: 23558
+      3: 16019
+      4: 19031
+    n_good_LambdaC_by_mode:
+      1: 29160
+      2: 27975
+      3: 19112
+      4: 22929
+    n_good_Lambda0_from_B_distribution:
+      0: 18120
+      1: 93610
+      2: 759
+      3: 2
+    n_good_Lambda0_from_LambdaC_distribution:
+      0: 95906
+      1: 15906
+      2: 679
+  last_updated: '2026-07-25'

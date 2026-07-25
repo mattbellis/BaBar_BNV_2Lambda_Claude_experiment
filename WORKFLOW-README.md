@@ -17,15 +17,19 @@ BaBar_BNV_2Lambda_Claude_experiment/
 │   ├── datasets.py           # loading parquet files, MC scaling weights
 │   ├── cutflow.py            # mask/cut builders and cutflow tables
 │   ├── purity_optimization.py # Stage 2: S/sqrt(S+B) scans, LambdaC mode-fit
+│   ├── pid_selector.py       # PID SelectorsMap bit decoding (ported from BNV_pLambda)
+│   ├── pid_optimization.py   # Stage 3: Punzi-FOM KM-ladder PID scans
 │   ├── plotting.py           # histogram creation/filling, standard plots
 │   ├── run_stage01.py        # Stage 0/1: load + diagnostics -> results/<channel>.yaml
 │   ├── run_stage02.py        # Stage 2: purity optimization -> results/<channel>.yaml
+│   ├── run_stage03.py        # Stage 3: PID optimization -> results/<channel>.yaml
 │   ├── generate_latex_macros.py # results/<channel>.yaml -> BAD_2Lambda/generated_*.tex
 │   ├── dataset_statistics.csv           # run/skim statistics (from p-Lambda0)
 │   ├── SP_cross_sections_and_labels.csv # SP-mode cross sections (from p-Lambda0)
 │   └── notebooks/
 │       ├── 01_load_and_diagnostics.ipynb
-│       └── 02_lambda_purity.ipynb
+│       ├── 02_lambda_purity.ipynb
+│       └── 03_pid_optimization.ipynb
 ├── results/                  # results/<channel>.yaml -- single source of truth for numbers
 └── BAD_2Lambda/              # the analysis note (BAD)
 ```
@@ -90,6 +94,44 @@ python run_stage02.py --channel all       # both channels
   ```
   cd BNV_2Lambda_analysis/notebooks
   jupyter lab 02_lambda_purity.ipynb
+  ```
+  Set `CHANNEL = 'Lam0Lam0'` or `'Lam0LamC'` in the second code cell, run
+  all cells top to bottom. Plots are written to
+  `BNV_2Lambda_analysis/notebooks/plots/<channel>/`.
+
+### Stage 3 — PID selector optimization
+
+Optimizes the KM-family PID selector (Super Loose -> Super Tight) for the
+$\Lambda^0$ proton/pion daughters (both channels) and, for `Lam0LamC`, each
+$\Lambda_c^+$ decay mode's own daughters, with a Punzi figure of merit
+($\mathrm{FOM} = \epsilon_{\rm sig}/\sqrt{B + a/2}$, $a=4$). Uses MC only --
+no collision data is read.
+
+```
+cd BNV_2Lambda_analysis
+python run_stage03.py --channel Lam0Lam0
+python run_stage03.py --channel Lam0LamC
+python run_stage03.py --channel all       # both channels
+```
+
+- Writes the recommended selector(s), FOM/efficiency/background at that
+  operating point, the boundary-hugging flag, and (Lam0LamC only) the
+  multi-candidate study redone with PID applied, to `results/<channel>.yaml`
+  (section `stage03`). It does **not** modify `channel_config.py` -- the
+  recommended values are printed for review and must be applied to
+  `channel_config.py`'s `pid` section by hand (or ask Claude) once accepted
+  at the checkpoint.
+- **Known result (not a bug, see the BAD Stage 3 section for details):** the
+  $\Lambda^0$ PID scan is boundary-hugging at the loosest KM rung in both
+  channels, and 3 of the 4 LambdaC per-mode scans are boundary-hugging in at
+  least one dimension -- `results/<channel>.yaml`'s `stage03` section
+  records an explicit "no PID cut at all" comparison FOM for the Lambda0
+  scan to check whether the recommended (loosest) selector is still a real
+  improvement over no cut.
+- For the plots (PID scan heatmaps/lines, multi-candidate comparison):
+  ```
+  cd BNV_2Lambda_analysis/notebooks
+  jupyter lab 03_pid_optimization.ipynb
   ```
   Set `CHANNEL = 'Lam0Lam0'` or `'Lam0LamC'` in the second code cell, run
   all cells top to bottom. Plots are written to

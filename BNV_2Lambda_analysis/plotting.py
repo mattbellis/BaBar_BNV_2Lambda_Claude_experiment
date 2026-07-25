@@ -361,6 +361,86 @@ def plot_fom_scan(df, xcol, chosen_x=None, xlabel='cut value', title=None, ax=No
     plt.tight_layout()
 
 ################################################################################
+def _short_selector_name(name):
+    """Drop the common KM-ladder suffix for compact axis tick labels."""
+    for suffix in ('KMProtonSelection', 'KMKaonMicroSelection', 'KMPionMicroSelection'):
+        if name.endswith(suffix):
+            return name[:-len(suffix)]
+    return name
+
+################################################################################
+def plot_pid_ladder_scan_1d(df, sel_col, sel_idx_col, chosen_selector=None, title=None):
+    """
+    Stage 3 Punzi-FOM scan over a single KM-ladder particle (e.g. LambdaC
+    mode 2's proton-only scan, or mode 4's pion-only scan): FOM, signal
+    efficiency, and weighted background vs. selector rung.
+    """
+    order = df.sort_values(sel_idx_col)
+    x = order[sel_idx_col].tolist()
+    labels = [_short_selector_name(s) for s in order[sel_col]]
+
+    fig, ax = plt.subplots(1, 3, figsize=(13, 3.5))
+    ax[0].plot(x, order['fom'], 'o-', color='tab:green')
+    ax[0].set_ylabel(r'Punzi FOM $= \epsilon_{sig} / \sqrt{B + a/2}$')
+    ax[1].plot(x, order['sig_eff'], 'o-', color='tab:purple')
+    ax[1].set_ylabel('signal efficiency')
+    ax[2].plot(x, order['bkg_weighted'], 's-', color='tab:orange')
+    ax[2].set_ylabel('weighted background (signal region)')
+
+    for a in ax:
+        a.set_xticks(x)
+        a.set_xticklabels(labels, rotation=45, ha='right')
+        a.set_xlabel(sel_col)
+        if chosen_selector is not None:
+            idx = order[sel_col].tolist().index(chosen_selector)
+            a.axvline(x[idx], color='k', linestyle='--', linewidth=1)
+
+    if title is not None:
+        plt.suptitle(title)
+    plt.tight_layout()
+
+################################################################################
+def plot_pid_ladder_scan_2d(df, row_sel_col, row_idx_col, col_sel_col, col_idx_col,
+                            value_col='fom', chosen=None, title=None, ax=None):
+    """
+    Stage 3 Punzi-FOM scan over two KM-ladder particles (e.g. Lambda0's p x
+    pi grid, or LambdaC mode 1/3's p x pi grid at a fixed K/pi rung): a
+    heatmap of `value_col` over the 2D grid, with the recommended cell
+    boxed. `chosen`, if given, is (row_selector_name, col_selector_name).
+    """
+    rows = sorted(df[row_idx_col].unique())
+    cols = sorted(df[col_idx_col].unique())
+    grid = np.full((len(rows), len(cols)), np.nan)
+    row_labels, col_labels = [None] * len(rows), [None] * len(cols)
+
+    for _, r in df.iterrows():
+        i, j = rows.index(r[row_idx_col]), cols.index(r[col_idx_col])
+        grid[i, j] = r[value_col]
+        row_labels[i], col_labels[j] = r[row_sel_col], r[col_sel_col]
+
+    if ax is None:
+        _, ax = plt.subplots(figsize=(1.3 * len(cols) + 2, 1.1 * len(rows) + 2))
+
+    im = ax.imshow(grid, origin='lower', cmap='viridis', aspect='auto')
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels([_short_selector_name(c) for c in col_labels], rotation=45, ha='right')
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([_short_selector_name(r) for r in row_labels])
+    ax.set_xlabel(col_sel_col)
+    ax.set_ylabel(row_sel_col)
+    plt.colorbar(im, ax=ax, label=value_col)
+
+    if chosen is not None:
+        i, j = row_labels.index(chosen[0]), col_labels.index(chosen[1])
+        ax.add_patch(plt.Rectangle((j - 0.5, i - 0.5), 1, 1, fill=False, edgecolor='red', linewidth=2))
+
+    if title is not None:
+        ax.set_title(title)
+    plt.tight_layout()
+
+    return grid
+
+################################################################################
 def plot_mass_fit(fit, hist_def=None, title=None, ax=None):
     """
     Binned mass distribution with the Gaussian-plus-linear-background fit

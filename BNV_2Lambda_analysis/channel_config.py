@@ -188,6 +188,14 @@ CHANNELS['Lam0Lam0'] = {
 
     'region_definitions': _default_region_definitions(),
     'hist_defs': dict(COMMON_HIST_DEFS),
+
+    # Stage 3 PID selector optimization (Punzi FOM): scans the KM-family
+    # ladder (pid_selector.KM_LADDER) for the Lambda0 proton and pion
+    # daughters. None until the Stage 3 checkpoint (Matt reviews and
+    # applies, same pattern as the Stage 2 cuts above).
+    'pid': {
+        'lambda0_selector': {'p': None, 'pi': None},
+    },
 }
 
 # ------------------------------------------------------------------------
@@ -322,6 +330,28 @@ CHANNELS['Lam0LamC']['lambdac_modes'] = {
     2: r'$p K_S^0$',
     3: r'$p K_S^0 \pi^+ \pi^-$',
     4: r'$\Lambda^0 \pi^+ \pi^+ \pi^-$',
+}
+
+# Stage 3 PID selector optimization (Punzi FOM): scans the KM-family ladder
+# (pid_selector.KM_LADDER) per LambdaC decay mode -- the daughter slots
+# scanned differ by mode (verified empirically against LambdaCdNLund on
+# signal MC; see STATUS.md Stage 3 notes):
+#   mode 1 (p K- pi+):        p (d1) + K (d2) + pi (d3)
+#   mode 2 (p K_S0):           p (d1) only -- K_S0's own daughters are not a
+#                              LambdaC daughter slot, no PID cut planned
+#   mode 3 (p K_S0 pi+ pi-):   p (d1) + pi (d3, d4 -- same selector, both)
+#   mode 4 (Lam0 pi+ pi+ pi-): pi (d2, d3, d4 -- same selector, all three);
+#                              the inner Lambda0's own p/pi reuse
+#                              'lambda0_selector' below, not scanned again.
+# None until the Stage 3 checkpoint (Matt reviews and applies).
+CHANNELS['Lam0LamC']['pid'] = {
+    'lambda0_selector': {'p': None, 'pi': None},
+    'lambdac_selector_per_mode': {
+        1: {'p': None, 'K': None, 'pi': None},
+        2: {'p': None},
+        3: {'p': None, 'pi': None},
+        4: {'pi': None},
+    },
 }
 
 

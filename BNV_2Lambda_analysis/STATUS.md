@@ -1,10 +1,62 @@
 # STATUS — BNV 2-Lambda analyses
 
-Snapshot of where things stand. Last updated: **2026-07-24** (Stage 2
-reviewed by Matt; non-boundary-hugging recommended values applied to
-`channel_config.py`. Ready for Stage 3.)
+Snapshot of where things stand. Last updated: **2026-07-25** (Stage 3 PID
+selector optimization complete, at the Phase 1/4 checkpoint boundary --
+awaiting Matt's review before anything is applied to `channel_config.py`.)
 
 ## Where we are
+
+Stage 3 (PID selector optimization, Punzi FOM) is **code-complete,
+run on full statistics, and awaiting Matt's review** (not yet applied to
+`channel_config.py` -- same "recommend, don't apply" pattern as Stage 2):
+
+- `pid_selector.py` ports `BNV_pLambda/myPIDselector.py`'s bit -> selector-name
+  mapping (channel-agnostic), validated bit-for-bit against the reference
+  decoder on real signal MC. Decoding itself is simplified to plain vectorized
+  bitwise ops (`(bits >> i) & 1`) rather than the reference's binary-string/
+  decimal-digit encoding trick -- verified equivalent, not just assumed.
+- New PID candidate masks in `cutflow.py`: `get_lambda0_pid_mask` (proton +
+  pion KM-ladder cuts, reused for both channels' Lambda0 and for Lam0LamC
+  mode 4's inner Lambda0) and `get_lambdac_pid_mask` (mode-dispatched: LambdaC
+  daughter-slot-to-particle assignment per mode was verified empirically
+  against `LambdaCdNLund` on signal MC, not assumed -- see "Key findings"
+  below). Both reuse `get_composite_purity_masks_per_B` unmodified for the
+  per-B combination (pass a `{'Lambda0': ..., 'LambdaC': ...}` candidate-mask
+  dict, same call as Stage 2 uses for purity).
+- `pid_optimization.py`: Punzi FOM (`sig_eff/sqrt(bkg + a/2)`, a=4, verified
+  against `BNV_pLambda/PID_study_and_plots_for_BAD.ipynb`) and KM-ladder grid
+  scans (`scan_lambda0_pid`, `scan_lambdac_mode_pid`), counting background
+  directly in the mES/DeltaE signal region from luminosity-weighted MC (all
+  `BACKGROUND_SP_MODES`, not sideband-subtracted -- different from Stage 2's
+  method, since this is an MC-truth estimate). Boundary-hugging is flagged by
+  reusing `purity_optimization.is_at_scan_boundary` on the ladder's integer
+  rung index; a second, PID-specific check flags any recommended point whose
+  background estimate rests on very few (<5) raw MC candidates (none did).
+- `run_stage03.py --channel all` writes `results/<channel>.yaml` (section
+  `stage03`): recommended selector(s) per target, FOM/efficiency/background,
+  boundary flag, an explicit "no PID cut at all" FOM comparison for the
+  Lambda0 scan, and (Lam0LamC) the multi-candidate study redone with PID
+  applied. **Result, not yet applied:** the Lambda0 scan is boundary-hugging
+  at the loosest KM rung in *both* channels (though genuinely better than no
+  cut at all); 3 of 4 LambdaC per-mode scans are boundary-hugging in at least
+  one dimension, but mode 2 gives a clean interior optimum and mode 1's
+  proton/kaon dimensions do too (only its pion dimension hugs the boundary).
+  See the BAD Stage 3 section for full discussion.
+- `notebooks/03_pid_optimization.ipynb` executed for both channels (plots in
+  `BAD_2Lambda/figures/`); checkpoint cell filled in with the findings above,
+  awaiting Matt's review comments.
+- BAD: new subsection in `data_selection.tex` (`sec:stage3pid`) plus a new
+  table (`generated_table_pid_selectors`), explicitly marked "not yet
+  applied" throughout (no cuts have been decided on yet, unlike Stage 2's
+  post-review "applied"/"not applied" callouts).
+
+**Checkpoint items for Matt:** review notebook 03 and the BAD section; decide,
+per PID target, whether to apply the recommended (often loosest-rung) KM
+selector, apply "no PID cut at all" instead (given several scans show the
+loosest rung barely beats no cut), or something else; confirm/adjust the
+LambdaC mode 1 and mode 2 selections (the two clean, non-boundary results).
+Once decided, ask Claude to apply the choices to `channel_config.py`'s `pid`
+section and re-run `run_stage03.py` / `generate_latex_macros.py`.
 
 Stage 2 (Lambda0/K_S0/LambdaC purity optimization) is **complete and
 checked in**. Matt reviewed notebook 02 and the BAD section; of the six
@@ -79,8 +131,9 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
   decay-mode labels, Stage 2 scan ranges (`flight_scan`,
   `mass_halfwidth_scan`), `FOM_SIDEBAND_WIDTH_MULT`, `k0s` config
   (Lam0LamC), `LambdaC` per-mode `mass_windows_per_mode` +
-  `mass_window_nsigma`. Channels: `Lam0Lam0` (B0 -> Lam0 Lam0), `Lam0LamC`
-  (B+ -> LamC+ Lam0).
+  `mass_window_nsigma`, `pid` section (Lambda0 selector + LambdaC per-mode
+  selectors, all `None` pending Stage 3 review). Channels: `Lam0Lam0`
+  (B0 -> Lam0 Lam0), `Lam0LamC` (B+ -> LamC+ Lam0).
 - `datasets.py` — `load_datasets` (blinded-only; `UNBLINDED=True` raises),
   MC luminosity weights, `add_derived_fields` (LambdaC flight significance,
   Lam0-from-B vs Lam0-from-LambdaC flight significance).
@@ -91,7 +144,10 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
   `get_lambdac_k0s_gate` (K_S0<->LambdaC linkage via daughter Lund==310),
   `get_lambdac_purity_mask` (mode window + K_S0 gate),
   `get_composite_purity_masks_per_B` (per-B daughter check, used by the
-  multi-candidate study and reusable by later stages).
+  multi-candidate study and reusable by later stages). Stage 3 PID masks:
+  `get_lambda0_pid_mask` (proton+pion KM-selector cut, reused for LambdaC
+  mode 4's inner Lambda0), `get_lambdac_pid_mask` (mode-dispatched, fixed
+  daughter slots per mode -- verified empirically, see "Key findings").
 - `purity_optimization.py` — Stage 2 S/sqrt(S+B) scans
   (`scan_threshold_cut`, `scan_mass_halfwidth`, `sideband_subtracted_counts`,
   with `is_at_scan_boundary` flagging boundary-hugging optima) and the
@@ -99,11 +155,22 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
 - `plotting.py` — stacked SP-mode histograms (signal rescaled per panel to
   background peak, "arb. norm."), mode-split overlays, mES-vs-DeltaE with
   region boxes, Stage 2 `plot_fom_scan` / `plot_mass_fit`.
-- `run_stage01.py`, `run_stage02.py` — write `results/<channel>.yaml`.
+- `pid_selector.py` — ported PID SelectorsMap bit decoder (`SELECTORS`
+  bit->name mapping per particle, `KM_LADDER` per-particle Super Loose ->
+  Super Tight ladder, `bits_for_hypothesis`/`passes_selector`).
+- `pid_optimization.py` — Stage 3 Punzi FOM (`punzi_fom`), per-B evaluation
+  (`evaluate_combo`), KM-ladder grid scans (`scan_lambda0_pid`,
+  `scan_lambdac_mode_pid`), and boundary/low-stats flagging
+  (`best_from_ladder_scan`, reusing `purity_optimization.is_at_scan_boundary`).
+- `run_stage01.py`, `run_stage02.py`, `run_stage03.py` — write
+  `results/<channel>.yaml`.
 - `notebooks/01_load_and_diagnostics.ipynb` — full Stage 0/1 diagnostics,
   channel-parametrized, incl. blinding-verification cell.
 - `notebooks/02_lambda_purity.ipynb` — Stage 2 scans/fits, cross-check
   plot, multi-candidate study, checkpoint cell. MC only.
+- `notebooks/03_pid_optimization.ipynb` — Stage 3 KM-ladder PID scans
+  (Lambda0 both channels; LambdaC per mode), no-PID-baseline sanity check,
+  multi-candidate study with PID applied, checkpoint cell. MC only.
 
 ## Key findings so far
 
@@ -140,14 +207,36 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
   8.3% still have >1 -- a large reduction from the Stage 1 baseline
   (~40% single-candidate for modes 1/2, ~20% for mode 3, 0% for mode 4),
   though still no candidate-selection policy applied.
+- **LambdaC daughter slots are fixed per mode** (checked empirically on
+  ~2500 signal candidates spanning all 4 modes, not assumed): mode 1
+  d1=p/d2=K/d3=pi; mode 2 d1=p/d2=K_S0; mode 3 d1=p/d2=K_S0/d3,d4=pi; mode 4
+  d1=Lambda0/d2,d3,d4=pi. No Lund-slot search needed for LambdaC's own
+  daughters (unlike the K_S0 gate, which does need one).
+- **Stage 3 PID scans**: the Lambda0 proton x pion KM-ladder scan is
+  boundary-hugging at the loosest rung (SuperLoose) in *both* channels --
+  but an explicit "no PID at all" check confirms SuperLoose is still a real,
+  if modest, improvement (FOM 0.364 vs. 0.229 for Lam0Lam0; 0.082 vs. 0.081
+  for Lam0LamC, a much smaller margin). Of the 4 LambdaC per-mode scans,
+  mode 2 gives a clean interior optimum (Loose proton) and mode 1's
+  proton/kaon dimensions do too (Tight proton, Very Loose kaon) -- only its
+  pion dimension hugs the boundary; modes 3 and 4 are boundary-hugging in
+  every dimension, with mode 3 notable for pulling in opposite directions
+  (proton wants tightest, pion wants loosest). None of the recommended
+  points rest on <5 raw background-MC candidates (range 6-333), so this
+  isn't a low-stats artifact. Redoing the multi-candidate study with these
+  PID cuts applied on top of Stage 2 purity (Lam0LamC): good-B fractions
+  move from (16.3%, 75.4%, 8.3%) to (32.4%, 62.6%, 5.0%) for (0, 1, >1) --
+  PID removes a real chunk of candidates outright, mostly via the LambdaC
+  per-mode cuts.
 
 ## Open decisions (parked, revisit at the noted stage)
 
 1. **Single-candidate requirement for Lam0LamC** (Stage 1/3-4): current
    `nLambda0 == 1` kills mode 4. Options: mode-aware Lambda0 counting, or
-   `nB == 1` only. Decision deferred until we see how PID cuts further
-   reduce *surviving* candidate multiplicity (Stage 2's multi-candidate
-   numbers above are a first look, still 8.3% multi-candidate).
+   `nB == 1` only. Stage 3's PID cuts (recommended, not yet applied) reduce
+   the multi-candidate fraction from 8.3% to ~5.0% -- an improvement, not a
+   resolution. Decision still deferred, now until after the antibaryon-veto
+   stage.
 2. **Exact signal windows per channel** (Stage 1/2): must stay no narrower
    than the upstream blinding; verify against the blinded box.
 3. **Stage 2 FOM-scan boundary issue** (Stage 2, still open): 4 of 6
@@ -164,71 +253,10 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
 
 ## Next steps (agreed)
 
-1. Stage 3: PID selector optimization (Punzi figure of merit) for the
-   proton (both channels' Lambda0 -> p pi-) and, for Lam0LamC, the
-   LambdaC daughters (p, K, pi per mode) and the K_S0 pions (K_S0 decays
-   weak/neutral, no PID needed on the K_S0 itself, but its pi+pi-
-   daughters may still benefit from a loose PID veto -- TBD). See "Stage
-   3 pickup notes" below.
-
-## Stage 3 pickup notes (PID selector optimization)
-
-Enough to start Stage 3 cold, without re-deriving from scratch:
-
-- **PID branches exist** in both channels' parquet files:
-  `pSelectorsMap`, `KSelectorsMap`, `piSelectorsMap`, `muSelectorsMap`,
-  `eSelectorsMap` -- one per charged-track collection, each an integer
-  bitmap (one bit per named selector, e.g.
-  `TightLHProtonSelection`/`VeryTightKMProtonSelection` for protons,
-  `TightBDTKaonMicroSelection` for kaons, etc.).
-- **Reference decoder**: `BNV_pLambda/myPIDselector.py` (`PIDselector`
-  class) maps bit position -> selector name per particle type
-  (`particle='p'/'K'/'pi'/...`). Not yet ported into
-  `BNV_2Lambda_analysis/`; porting it (channel-agnostic, so it belongs
-  next to `datasets.py`/`cutflow.py`, not duplicated) is the natural
-  first step of Stage 3.
-- **Reference PID-optimization notebooks** (read for the FOM/scan
-  pattern, not the exact code -- they predate this channel-parametrized
-  framework): `BNV_pLambda/PID_study_and_plots_for_BAD.ipynb`,
-  `PID_selector_function_explainer.ipynb`, `trying_out_PID_selector.ipynb`.
-- **Reference Punzi FOM** (the actual PID-selector one; verified by
-  reading the notebook, not guessed): `BNV_pLambda/PID_study_and_plots_for_BAD.ipynb`,
-  `fom = sig_eff / sqrt(bkg998 + bkg1005 + a/2)` with `a = 4` (Punzi 2003
-  form, eff / (a/2 + sqrt(B)) -- appropriate for optimizing toward an
-  upper limit rather than a discovery significance, per CLAUDE.md).
-  `sig_eff` there is signal MC efficiency relative to the pre-PID sample;
-  background is a weighted sum of specific continuum SP modes (998, 1005)
-  using ad hoc Run1-era scale factors in the reference -- in this
-  framework, use `datasets.get_scaling_weights` instead of copying those
-  factors (same substitution already made for Stage 2's background
-  weighting). NOTE: `babar_analysis_tools.py`'s `punzi_fom_nn` is a
-  *different* stage's reference (the DeltaE-sideband MLP-output Punzi FOM
-  for Stage 5, not Stage 3) -- don't reuse it here by mistake.
-  Note the Stage 2 boundary-hugging issue above: if a PID-threshold scan
-  runs into the same skimmed-sideband problem, the fix path is the same
-  (widen range / restrict to fit region) -- but PID scans are typically
-  over a discrete selector ladder (Very Loose -> ... -> Very Tight), not
-  a continuous variable, so this may not apply the same way.
-- **What Stage 3 selects PID for**: the proton in every Lambda0 -> p pi-
-  (both channels); for `Lam0LamC`, additionally the LambdaC daughters,
-  which differ **by decay mode** (`cutflow.get_lambdac_decay_mode`):
-  mode 1 (p K- pi+) needs p+K+pi selectors, mode 2 (p K_S0) needs only a
-  p selector (K_S0's pi+pi- are from a V0, typically not PID-cut), mode 3
-  (p K_S0 pi+pi-) needs p (+ loose pi), mode 4 (Lambda0 pi+pi+pi-) needs
-  the *inner* Lambda0's proton (already covered) + pi selectors on the
-  three pions.
-- **Architecture expectation**: following the existing pattern (Stage 2's
-  `get_purity_mask_for_comp` / `get_lambdac_purity_mask`), PID cuts should
-  be new candidate-level mask builders in `cutflow.py`, parametrized by
-  channel config (new PID selector choices + thresholds probably belong
-  in a new `channel_config.py` section, e.g. `pid` or per-composite
-  `pid_selector`), reusing `get_composite_purity_masks_per_B` (or
-  extending it) for the per-B combination. `purity_optimization.py`'s
-  scan/FOM helpers are Stage-2-specific (S/sqrt(S+B)); Stage 3 needs a
-  Punzi-FOM analog -- probably a new module or an addition to
-  `purity_optimization.py` (name TBD, e.g. `pid_optimization.py`, if the
-  scan mechanics differ enough to not share code cleanly).
-- **Follow CLAUDE.md rule 4**: PID selector choices (which map/threshold
-  per particle, per mode) are exactly the kind of nontrivial design
-  decision to propose and agree with Matt before implementing, not to
-  decide unilaterally.
+1. Matt reviews the Stage 3 checkpoint (notebook 03, BAD `sec:stage3pid`,
+   this file) and decides which PID selectors (if any -- several scans are
+   boundary-hugging at the loosest rung, see "Key findings") to apply to
+   `channel_config.py`'s `pid` section.
+2. Once decided: apply to `channel_config.py`, re-run `run_stage03.py` and
+   `generate_latex_macros.py` (Claude can do this on request), then proceed
+   to Stage 4 (antibaryon veto).

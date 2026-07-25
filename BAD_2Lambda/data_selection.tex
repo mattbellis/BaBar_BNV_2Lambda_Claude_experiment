@@ -340,3 +340,112 @@ after the PID and antibaryon-veto stages.
     Stage 2 purity cuts, $\Bu \rightarrow \Lambda_c^+\Lambda^0$.}
     \label{fig:multicandidate}
 \end{figure}
+
+\subsection{PID selector optimization (Stage 3)\label{sec:stage3pid}}
+
+As in Section~\ref{sec:stage2purity}, all numbers and figures in this
+section use MC only -- no collision data is examined. Charged-track PID
+information is decoded from the per-track \texttt{<particle>SelectorsMap}
+bitmaps (\texttt{pid\_selector.py}, ported from the $\bar{p}\Lambda^0$
+analysis's \texttt{myPIDselector.py} and validated bit-for-bit against it)
+and optimized with the Punzi figure of merit appropriate to an upper-limit
+search~\cite{Punzi:2003bu}: $\mathrm{FOM} = \epsilon_{\rm sig}/\sqrt{B + a/2}$
+with $a=4$, where $\epsilon_{\rm sig}$ is the signal-MC efficiency of the PID
+cut \emph{relative to} the Stage 1/2 selection already in force, and $B$ is
+the luminosity-weighted count of background MC (all SP modes, not the two
+ad hoc continuum modes used in the $\bar{p}\Lambda^0$ reference) surviving
+the same selection directly in the \mes/\DeltaE\ signal region -- an
+MC-truth background estimate, not the sideband-based one used in
+Section~\ref{sec:stage2purity} (a data-driven sideband estimate is deferred
+to Stage 5/6). The scan is over the KM-family selector ladder (Super Loose
+through Super Tight) for each PID target: the $\Lambda^0$ proton and pion
+daughters (both channels, and reused for $\Lambda_c^+$ mode 4's embedded
+$\Lambda^0$ rather than re-scanned); and, for $\Bu \rightarrow
+\Lambda_c^+\Lambda^0$, each $\Lambda_c^+$ decay mode's own daughters, scanned
+independently per mode since the relevant particles differ by mode (mode 1:
+$p$, $K^-$, $\pi^+$; mode 2: $p$ only; mode 3: $p$, $\pi^\pm$; mode 4: the
+three $\pi^\pm$ daughters, with the embedded $\Lambda^0$ covered by the
+$\Lambda^0$ scan above). No PID cut is applied to the $K_S^0$'s own $\pi^+\pi^-$
+daughters at this stage (deferred as a possible future refinement).
+\textbf{None of the values in this section have been applied to
+\texttt{channel\_config.py} yet} -- Stage 3 produces recommendations for
+review, exactly as Stage 2 did.
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.62\textwidth]{figures/Lam0Lam0/lambda0_pid_scan.png}
+    \includegraphics[width=0.62\textwidth]{figures/Lam0LamC/lambda0_pid_scan.png}
+    \caption{$\Lambda^0$ proton $\times$ pion Punzi-FOM PID scan for $\Bz
+    \rightarrow \Lambda^0\Lambda^0$ (top) and $\Bu \rightarrow
+    \Lambda_c^+\Lambda^0$ (bottom); the boxed cell marks the scan maximum.}
+    \label{fig:lambda0_pid_scan}
+\end{figure}
+
+Table~\ref{tab:pidselectors} summarizes every scan's recommended
+selector(s), FOM, efficiency, background, and whether the optimum sits at
+the edge of the scanned ladder rather than at a genuine interior maximum
+(as in Section~\ref{sec:stage2purity}, this is flagged rather than silently
+trusted). A second, PID-specific failure mode is also checked at every grid
+point: a tight enough selector can drive the weighted background estimate
+toward zero on very few raw MC candidates, inflating the FOM from a noisy
+denominator rather than real background rejection; none of the recommended
+operating points triggered this (raw background-MC candidate counts at the
+recommended cut ranged from 6 to 333 across all scans).
+
+\input{generated_table_pid_selectors}
+
+\textbf{The $\Lambda^0$ scan is boundary-hugging (loosest rung) in both
+channels} (Figure~\ref{fig:lambda0_pid_scan}): unlike
+Section~\ref{sec:stage2purity}'s boundary-hugging cases (traced to an
+upstream mass-skim depleting the sidebands), the likely explanation here is
+simpler -- the background already surviving the Stage 1/2 purity cuts, in
+the signal region, is low enough that any efficiency lost by tightening PID
+further is not worth the marginal background rejection. An explicit check
+against applying \emph{no} PID cut at all confirms the recommended (loosest)
+selector is still a genuine, if modest, improvement over no cut
+(FOM~$\LamLamLamZeroPidFom$ vs.\ $\LamLamLamZeroPidFomNoPidAtAll$ for
+$\Bz\to\Lambda^0\Lambda^0$; $\LamLamCLamZeroPidFom$ vs.\
+$\LamLamCLamZeroPidFomNoPidAtAll$ for $\Bu\to\Lambda_c^+\Lambda^0$, a much
+smaller margin) -- so the true optimum plausibly lies outside the KM ladder
+entirely, at an even looser (or no) requirement, rather than at a real
+trade-off within it.
+
+The four $\Lambda_c^+$ per-mode scans are more mixed. Mode 2 ($pK_S^0$)
+gives a genuine interior optimum (Loose proton) -- the one clean result,
+echoing Section~\ref{sec:stage2purity}'s single clean scan. Mode 1
+($pK^-\pi^+$, Figure~\ref{fig:lambdac_mode1_pid_scan}) is a partial success:
+the proton and kaon dimensions both land on clean interior optima (Tight
+proton, Very Loose kaon), while the pion dimension still prefers the
+loosest rung. Modes 3 and 4 are boundary-hugging in every scanned dimension;
+mode 3 is notable for pulling in \emph{opposite} directions (proton wants
+the \emph{tightest} rung, pion the \emph{loosest}), suggestive of a
+proton-fake-dominated background in that mode, not yet investigated further.
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{figures/Lam0LamC/lambdac_mode1_pid_scan.png}
+    \caption{$\Lambda_c^+$ mode 1 proton $\times$ kaon Punzi-FOM PID scan
+    (pion selector fixed at its own recommended value).}
+    \label{fig:lambdac_mode1_pid_scan}
+\end{figure}
+
+Redoing the Section~\ref{sec:stage2purity} multi-candidate study with these
+recommended PID selectors folded in on top of the Stage 2 purity cuts (
+$\Bu \rightarrow \Lambda_c^+\Lambda^0$): the good-$B$-candidate fractions
+move from ($\LamLamCFracZeroGoodBPct\%$, $\LamLamCFracOneGoodBPct\%$,
+$\LamLamCFracMultiGoodBPct\%$) to ($\LamLamCFracZeroGoodBPidPct\%$,
+$\LamLamCFracOneGoodBPidPct\%$, $\LamLamCFracMultiGoodBPidPct\%$) for
+(0, 1, $>$1) good candidates. PID removes a sizeable fraction of previously
+good candidates outright -- mostly via the $\Lambda_c^+$ per-mode cuts,
+since the $\Lambda^0$ selector is the loosest KM rung and costs little on
+its own -- and reduces the multi-candidate fraction somewhat, but does not
+resolve it. As in Section~\ref{sec:stage2purity}, this is \textbf{presented
+for review, not a candidate-selection decision}: that choice remains
+deferred (Section~\ref{sec:lambdacmodes}, open decision) until after the
+antibaryon-veto stage.
+
+Given how many of the scans above are boundary-hugging at the loosest KM
+rung, the recommendation for the next checkpoint is to decide, per target,
+whether ``no PID cut'' is preferable to ``loosest KM selector'' rather than
+mechanically applying the ladder's edge value -- particularly for the
+$\Lambda^0$ daughters and $\Lambda_c^+$ modes 3/4's pions.

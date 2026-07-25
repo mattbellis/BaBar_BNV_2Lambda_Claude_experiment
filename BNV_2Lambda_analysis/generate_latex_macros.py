@@ -157,6 +157,104 @@ def macros_for_channel_stage02(channel, res):
     return m
 
 ################################################################################
+def _pid_ladder_result_macros(prefix, summary):
+    """Macros shared by any one Stage 3 ladder-scan result (Lambda0, or one
+    LambdaC mode): recommended selector name(s) + FOM/efficiency/background/
+    boundary flag. `prefix` is the full macro prefix (channel + target)."""
+    m = []
+    for particle, selector in summary['recommended_selector'].items():
+        pname = {'p': 'P', 'K': 'K', 'pi': 'Pi'}[particle]
+        m.append((f"{prefix}{pname}Selector", selector))
+    m.append((f"{prefix}Fom", fmt_float(summary['fom_at_recommended'])))
+    m.append((f"{prefix}SigEffPct", fmt_float(100 * summary['sig_eff_at_recommended'], "{:.1f}")))
+    m.append((f"{prefix}BkgWeighted", fmt_float(summary['bkg_weighted_at_recommended'], "{:.2f}")))
+    m.append((f"{prefix}AtBoundary", "yes" if summary['any_at_scan_boundary'] else "no"))
+    if 'fom_no_pid_at_all' in summary:
+        m.append((f"{prefix}FomNoPidAtAll", fmt_float(summary['fom_no_pid_at_all'])))
+        m.append((f"{prefix}BkgNoPidAtAll", fmt_float(summary['bkg_weighted_no_pid_at_all'], "{:.2f}")))
+    return m
+
+################################################################################
+def macros_for_channel_stage03(channel, res):
+    """Stage 3 (PID selector optimization) macros: recommended KM-ladder
+    selector(s), Punzi FOM/efficiency/background, and boundary flag, for the
+    Lambda0 scan (both channels) and each LambdaC decay mode (Lam0LamC)."""
+    ch = CHANNEL_PREFIX[channel]
+    s = res.get('stage03')
+    if s is None:
+        return []
+
+    m = _pid_ladder_result_macros(f"{ch}LamZeroPid", s['lambda0_pid'])
+
+    if 'lambdac_pid_per_mode' in s:
+        for mode, name in MODE_NAME.items():
+            summary = s['lambdac_pid_per_mode'].get(mode)
+            if summary is None:
+                continue
+            m += _pid_ladder_result_macros(f"{ch}LamCMode{name}Pid", summary)
+
+    if 'multi_candidate_study' in s:
+        mc = s['multi_candidate_study']
+        m.append((f"{ch}FracZeroGoodBPidPct", fmt_float(100 * mc['frac_zero_good_B'], "{:.1f}")))
+        m.append((f"{ch}FracOneGoodBPidPct", fmt_float(100 * mc['frac_one_good_B'], "{:.1f}")))
+        m.append((f"{ch}FracMultiGoodBPidPct", fmt_float(100 * mc['frac_multi_good_B'], "{:.1f}")))
+
+    return m
+
+################################################################################
+def write_table_pid_selectors(all_results):
+    """Stage 3 recommended KM-ladder selector(s) and Punzi FOM/efficiency/
+    background per PID target (Lambda0, both channels; LambdaC per mode,
+    Lam0LamC), with the boundary-hugging flag surfaced rather than hidden."""
+    rows = []  # (label, summary)
+
+    for channel in ('Lam0Lam0', 'Lam0LamC'):
+        res = all_results.get(channel, {})
+        s = res.get('stage03')
+        if s is None:
+            continue
+        label = CHANNELS[channel]['decay_label']
+        rows.append((rf"{label}: $\Lambda^0$", s['lambda0_pid']))
+        if 'lambdac_pid_per_mode' in s:
+            mode_labels = CHANNELS[channel]['lambdac_modes']
+            for mode, summary in s['lambdac_pid_per_mode'].items():
+                rows.append((rf"{label}: $\Lambda_c^+$ mode {mode} ({mode_labels[mode]})", summary))
+
+    if not rows:
+        return
+
+    lines = [r"% AUTO-GENERATED -- DO NOT EDIT BY HAND",
+             r"\begin{table}[h]",
+             r"\caption{Stage 3 recommended KM-ladder PID selector(s), the"
+             r" Punzi FOM ($a=4$) and signal efficiency/background at that"
+             r" operating point, and whether the scan optimum sits at the"
+             r" edge of the scanned ladder (see text before applying).}",
+             r"\label{tab:pidselectors}",
+             r"\centering",
+             r"\small",
+             r"\resizebox{\textwidth}{!}{%",
+             r"\begin{tabular}{lp{5.5cm}rrrc}",
+             r"\toprule",
+             r"Target & Recommended selector(s) & FOM & $\epsilon_{sig}$ [\%] & "
+             r"$B$ (wtd.) & boundary? \\",
+             r"\midrule"]
+
+    for label, summary in rows:
+        sel_str = ", ".join(f"{p}: {n.replace('KMProtonSelection','').replace('KMKaonMicroSelection','').replace('KMPionMicroSelection','')}"
+                            for p, n in summary['recommended_selector'].items())
+        lines.append(
+            rf"{label} & {sel_str} & {summary['fom_at_recommended']:.3f} & "
+            rf"{100*summary['sig_eff_at_recommended']:.1f} & {summary['bkg_weighted_at_recommended']:.2f} & "
+            rf"{'yes' if summary['any_at_scan_boundary'] else 'no'} \\")
+
+    lines += [r"\bottomrule", r"\end{tabular}", r"}", r"\end{table}"]
+
+    outname = os.path.join(BAD_DIR, "generated_table_pid_selectors.tex")
+    with open(outname, 'w') as f:
+        f.write("\n".join(lines) + "\n")
+    print(f"Wrote {outname}")
+
+################################################################################
 def write_table_lambdac_mode_fits(all_results):
     """LambdaC per-mode mass-resolution fit results and recommended windows."""
     channel = 'Lam0LamC'
@@ -215,6 +313,8 @@ def write_macros(all_results):
         for name, value in macros_for_channel(channel, res):
             lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
         for name, value in macros_for_channel_stage02(channel, res):
+            lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
+        for name, value in macros_for_channel_stage03(channel, res):
             lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
 
     outname = os.path.join(BAD_DIR, 'generated_numbers.tex')
@@ -402,6 +502,7 @@ if __name__ == '__main__':
             write_table_cutflow(channel, res)
     write_table_lambdac_modes(all_results)
     write_table_lambdac_mode_fits(all_results)
+    write_table_pid_selectors(all_results)
     write_table_dataskims()
 
     print("\nDone. Remember to rerun this script whenever a results file changes.")

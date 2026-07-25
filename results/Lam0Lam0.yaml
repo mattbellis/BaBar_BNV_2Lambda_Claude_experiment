@@ -116,3 +116,44 @@ stage02:
     frac_one_good_B: 0.9854988269467099
     frac_multi_good_B: 0.006435035191598704
   last_updated: '2026-07-25'
+stage03:
+  lambda0_pid:
+    ladders:
+      p:
+      - SuperLooseKMProtonSelection
+      - VeryLooseKMProtonSelection
+      - LooseKMProtonSelection
+      - TightKMProtonSelection
+      - VeryTightKMProtonSelection
+      - SuperTightKMProtonSelection
+      pi:
+      - SuperLooseKMPionMicroSelection
+      - VeryLooseKMPionMicroSelection
+      - LooseKMPionMicroSelection
+      - TightKMPionMicroSelection
+      - VeryTightKMPionMicroSelection
+      - SuperTightKMPionMicroSelection
+    recommended_selector:
+      p: SuperLooseKMProtonSelection
+      pi: SuperLooseKMPionMicroSelection
+    fom_at_recommended: 0.36361634004192883
+    sig_eff_at_recommended: 0.9275571442626177
+    bkg_weighted_at_recommended: 4.507206177421641
+    bkg_raw_mc_at_recommended: 17
+    at_scan_boundary:
+      p_selector_idx: true
+      pi_selector_idx: true
+    any_at_scan_boundary: true
+    low_mc_stats_at_recommended: false
+    fom_no_pid_at_all: 0.2294770971835078
+    bkg_weighted_no_pid_at_all: 16.98983997029621
+  multi_candidate_study:
+    n_signal_events: 44755
+    n_good_B_distribution:
+      0: 15915
+      1: 28831
+      2: 9
+    frac_zero_good_B: 0.35560272595240755
+    frac_one_good_B: 0.644196179197855
+    frac_multi_good_B: 0.0002010948497374595
+  last_updated: '2026-07-25'

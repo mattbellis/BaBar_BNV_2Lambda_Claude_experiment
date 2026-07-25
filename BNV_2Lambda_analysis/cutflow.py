@@ -20,6 +20,8 @@ same code serves both B0 -> Lambda0 Lambda0 and B+ -> LambdaC+ Lambda0.
 import awkward as ak
 import numpy as np
 
+import pid_selector
+
 ################################################################################
 # Utilities
 ################################################################################
@@ -301,6 +303,136 @@ def get_composite_purity_masks_per_B(data, config, candidate_masks=None):
         mask_b = dmask if mask_b is None else (mask_b & dmask)
 
     return mask_b
+
+################################################################################
+# Stage 3: PID selector masks
+#
+# selector_name=None always means "skip this cut" (pass-all) so callers can
+# scan one particle at a time, or apply a partial config where some slots
+# are still unset (see channel_config.py's 'pid' section).
+################################################################################
+def _safe_gather(bool_array, idx, valid_mask):
+    """
+    Gather a jagged boolean array (aligned to some hypothesis/composite
+    collection) at per-candidate index `idx`, restricted to rows where
+    `valid_mask` is True. Elsewhere `idx` may not even apply to this
+    collection (e.g. a different LambdaC decay mode's daughter slot) or may
+    be an unused-slot placeholder (0) in an event whose collection is empty
+    for this particle type -- both would otherwise raise an out-of-range/
+    empty-list error on the gather. Mirrors the ks_idx placeholder + pad_none
+    pattern in get_lambdac_k0s_gate; result is only meaningful where
+    valid_mask is True.
+    """
+    safe_idx = ak.where(valid_mask, idx, 0)
+    padded = ak.fill_none(ak.pad_none(bool_array, 1, axis=1), False)
+    return padded[safe_idx]
+
+################################################################################
+def get_lambda0_pid_mask(data, p_selector=None, pi_selector=None):
+    """
+    Candidate mask for the Lambda0 collection (both channels; also reused
+    for Lam0LamC LambdaC mode 4's inner Lambda0, via LambdaCd1Idx): proton
+    daughter (Lambda0d1Idx, into the 'p' hypothesis collection) and pion
+    daughter (Lambda0d2Idx, into 'pi') PID selector cuts. No empty-collection
+    guard needed here: a Lambda0 candidate cannot exist in an event without
+    its own p/pi daughters already present in those collections.
+    """
+    mask = ak.ones_like(data['Lambda0d1Idx'], dtype=bool)
+
+    if p_selector is not None:
+        p_bits = pid_selector.bits_for_hypothesis(data['pTrkIdx'], data['pSelectorsMap'])
+        p_pass = pid_selector.passes_selector(p_bits, p_selector, 'p')
+        mask = mask & p_pass[data['Lambda0d1Idx']]
+
+    if pi_selector is not None:
+        pi_bits = pid_selector.bits_for_hypothesis(data['piTrkIdx'], data['piSelectorsMap'])
+        pi_pass = pid_selector.passes_selector(pi_bits, pi_selector, 'pi')
+        mask = mask & pi_pass[data['Lambda0d2Idx']]
+
+    return mask
+
+################################################################################
+def get_lambdac_pid_mask(data, selectors_per_mode, lambda0_pid_mask):
+    """
+    Candidate mask for the LambdaC collection (Lam0LamC only): mode-dependent
+    PID selector cuts on the fixed daughter slots per mode (empirically
+    verified against LambdaCdNLund on signal MC -- see STATUS.md Stage 3
+    notes):
+
+        mode 1 (p K- pi+):        d1=p, d2=K, d3=pi
+        mode 2 (p K_S0):           d1=p
+        mode 3 (p K_S0 pi+ pi-):   d1=p, d3=pi, d4=pi (same selector, both)
+        mode 4 (Lam0 pi+ pi+ pi-): d2=pi, d3=pi, d4=pi (same selector, all
+                                   three); the inner Lambda0 (d1) reuses
+                                   lambda0_pid_mask via LambdaCd1Idx rather
+                                   than being re-decoded here.
+
+    selectors_per_mode: {mode: {particle: selector_name_or_None}} (see
+    channel_config.py's 'pid'/'lambdac_selector_per_mode'); a missing
+    particle key, or a None value, skips that cut.
+    lambda0_pid_mask: jagged mask aligned with the Lambda0 collection (e.g.
+    from get_lambda0_pid_mask), reused for mode 4's inner Lambda0.
+    """
+    mode = get_lambdac_decay_mode(data)
+
+    p_bits = pid_selector.bits_for_hypothesis(data['pTrkIdx'], data['pSelectorsMap'])
+    k_bits = pid_selector.bits_for_hypothesis(data['KTrkIdx'], data['KSelectorsMap'])
+    pi_bits = pid_selector.bits_for_hypothesis(data['piTrkIdx'], data['piSelectorsMap'])
+
+    def sel_for(m, particle):
+        return selectors_per_mode.get(m, {}).get(particle)
+
+    mask = ak.ones_like(mode, dtype=bool)
+
+    # Mode 1: p (d1), K (d2), pi (d3)
+    m1 = (mode == 1)
+    s = sel_for(1, 'p')
+    if s is not None:
+        p_pass = pid_selector.passes_selector(p_bits, s, 'p')
+        mask = mask & (~m1 | _safe_gather(p_pass, data['LambdaCd1Idx'], m1))
+    s = sel_for(1, 'K')
+    if s is not None:
+        k_pass = pid_selector.passes_selector(k_bits, s, 'K')
+        mask = mask & (~m1 | _safe_gather(k_pass, data['LambdaCd2Idx'], m1))
+    s = sel_for(1, 'pi')
+    if s is not None:
+        pi_pass = pid_selector.passes_selector(pi_bits, s, 'pi')
+        mask = mask & (~m1 | _safe_gather(pi_pass, data['LambdaCd3Idx'], m1))
+
+    # Mode 2: p (d1) only
+    m2 = (mode == 2)
+    s = sel_for(2, 'p')
+    if s is not None:
+        p_pass = pid_selector.passes_selector(p_bits, s, 'p')
+        mask = mask & (~m2 | _safe_gather(p_pass, data['LambdaCd1Idx'], m2))
+
+    # Mode 3: p (d1), pi (d3 and d4, same selector)
+    m3 = (mode == 3)
+    s = sel_for(3, 'p')
+    if s is not None:
+        p_pass = pid_selector.passes_selector(p_bits, s, 'p')
+        mask = mask & (~m3 | _safe_gather(p_pass, data['LambdaCd1Idx'], m3))
+    s = sel_for(3, 'pi')
+    if s is not None:
+        pi_pass = pid_selector.passes_selector(pi_bits, s, 'pi')
+        pi3_ok = (_safe_gather(pi_pass, data['LambdaCd3Idx'], m3) &
+                  _safe_gather(pi_pass, data['LambdaCd4Idx'], m3))
+        mask = mask & (~m3 | pi3_ok)
+
+    # Mode 4: pi (d2, d3, d4, same selector); inner Lambda0 (d1) via
+    # lambda0_pid_mask, not re-decoded
+    m4 = (mode == 4)
+    s = sel_for(4, 'pi')
+    if s is not None:
+        pi_pass = pid_selector.passes_selector(pi_bits, s, 'pi')
+        pi4_ok = (_safe_gather(pi_pass, data['LambdaCd2Idx'], m4) &
+                  _safe_gather(pi_pass, data['LambdaCd3Idx'], m4) &
+                  _safe_gather(pi_pass, data['LambdaCd4Idx'], m4))
+        mask = mask & (~m4 | pi4_ok)
+    inner_lambda0_ok = _safe_gather(lambda0_pid_mask, data['LambdaCd1Idx'], m4)
+    mask = mask & (~m4 | inner_lambda0_ok)
+
+    return mask
 
 ################################################################################
 # Diagnostic cuts for the early-stage notebooks
