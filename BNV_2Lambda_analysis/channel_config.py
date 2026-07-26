@@ -191,10 +191,13 @@ CHANNELS['Lam0Lam0'] = {
 
     # Stage 3 PID selector optimization (Punzi FOM): scans the KM-family
     # ladder (pid_selector.KM_LADDER) for the Lambda0 proton and pion
-    # daughters. None until the Stage 3 checkpoint (Matt reviews and
-    # applies, same pattern as the Stage 2 cuts above).
+    # daughters. Applied 2026-07-25 -- see results/Lam0Lam0.yaml (stage03)
+    # and the Stage 3 BAD section. NOTE: this scan is boundary-hugging at
+    # the loosest rung (FOM monotonic across the whole ladder); an explicit
+    # check against applying no PID cut at all confirmed SuperLoose is still
+    # a real, if modest, improvement (FOM 0.364 vs. 0.229) -- see STATUS.md.
     'pid': {
-        'lambda0_selector': {'p': None, 'pi': None},
+        'lambda0_selector': {'p': 'SuperLooseKMProtonSelection', 'pi': 'SuperLooseKMPionMicroSelection'},
     },
 }
 
@@ -343,14 +346,19 @@ CHANNELS['Lam0LamC']['lambdac_modes'] = {
 #   mode 4 (Lam0 pi+ pi+ pi-): pi (d2, d3, d4 -- same selector, all three);
 #                              the inner Lambda0's own p/pi reuse
 #                              'lambda0_selector' below, not scanned again.
-# None until the Stage 3 checkpoint (Matt reviews and applies).
+# Applied 2026-07-25 -- see results/Lam0LamC.yaml (stage03) and the Stage 3
+# BAD section. NOTE the boundary-hugging caveats (STATUS.md): the Lambda0
+# scan and modes 3/4 hit the loosest scanned rung (a no-PID-at-all check
+# confirmed the loosest rung still beats no cut, but only by a small margin
+# for Lambda0 in this channel); mode 1's proton/kaon dimensions and mode 2
+# gave clean interior optima.
 CHANNELS['Lam0LamC']['pid'] = {
-    'lambda0_selector': {'p': None, 'pi': None},
+    'lambda0_selector': {'p': 'SuperLooseKMProtonSelection', 'pi': 'SuperLooseKMPionMicroSelection'},
     'lambdac_selector_per_mode': {
-        1: {'p': None, 'K': None, 'pi': None},
-        2: {'p': None},
-        3: {'p': None, 'pi': None},
-        4: {'pi': None},
+        1: {'p': 'TightKMProtonSelection', 'K': 'VeryLooseKMKaonMicroSelection', 'pi': 'SuperLooseKMPionMicroSelection'},
+        2: {'p': 'LooseKMProtonSelection'},
+        3: {'p': 'SuperTightKMProtonSelection', 'pi': 'SuperLooseKMPionMicroSelection'},
+        4: {'pi': 'SuperLooseKMPionMicroSelection'},
     },
 }
 

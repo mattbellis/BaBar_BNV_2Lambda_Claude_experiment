@@ -1,14 +1,15 @@
 # STATUS — BNV 2-Lambda analyses
 
 Snapshot of where things stand. Last updated: **2026-07-25** (Stage 3 PID
-selector optimization complete, at the Phase 1/4 checkpoint boundary --
-awaiting Matt's review before anything is applied to `channel_config.py`.)
+selector optimization reviewed by Matt; all recommended selectors, including
+the boundary-hugging ones, applied to `channel_config.py`. Ready for Stage 4.)
 
 ## Where we are
 
-Stage 3 (PID selector optimization, Punzi FOM) is **code-complete,
-run on full statistics, and awaiting Matt's review** (not yet applied to
-`channel_config.py` -- same "recommend, don't apply" pattern as Stage 2):
+Stage 3 (PID selector optimization, Punzi FOM) is **complete and checked
+in**. Matt reviewed notebook 03, the BAD section, and a new mass-distribution
+diagnostic notebook (see below), and decided to apply every recommended
+selector, including the boundary-hugging ones (2026-07-25):
 
 - `pid_selector.py` ports `BNV_pLambda/myPIDselector.py`'s bit -> selector-name
   mapping (channel-agnostic), validated bit-for-bit against the reference
@@ -36,27 +37,38 @@ run on full statistics, and awaiting Matt's review** (not yet applied to
   `stage03`): recommended selector(s) per target, FOM/efficiency/background,
   boundary flag, an explicit "no PID cut at all" FOM comparison for the
   Lambda0 scan, and (Lam0LamC) the multi-candidate study redone with PID
-  applied. **Result, not yet applied:** the Lambda0 scan is boundary-hugging
-  at the loosest KM rung in *both* channels (though genuinely better than no
-  cut at all); 3 of 4 LambdaC per-mode scans are boundary-hugging in at least
-  one dimension, but mode 2 gives a clean interior optimum and mode 1's
+  applied. **Result:** the Lambda0 scan is boundary-hugging at the loosest
+  KM rung in *both* channels (though genuinely better than no cut at all);
+  3 of 4 LambdaC per-mode scans are boundary-hugging in at least one
+  dimension, but mode 2 gives a clean interior optimum and mode 1's
   proton/kaon dimensions do too (only its pion dimension hugs the boundary).
   See the BAD Stage 3 section for full discussion.
 - `notebooks/03_pid_optimization.ipynb` executed for both channels (plots in
-  `BAD_2Lambda/figures/`); checkpoint cell filled in with the findings above,
-  awaiting Matt's review comments.
+  `BAD_2Lambda/figures/`); checkpoint cell filled in with the findings above.
+- **New: `notebooks/pid_optimization_visualization.ipynb`** (requested by
+  Matt at the checkpoint, not tied to a `run_stage*.py` script) -- a visual
+  cross-check independent of the Punzi FOM: raw $\Lambda^0$/$\Lambda_c^+$
+  mass distributions before vs. after each cut, with the S window and
+  contiguous sideband bands shaded (`plotting.plot_mass_cut_diagnostic`,
+  same peak/sideband convention as Stage 2's `FOM_SIDEBAND_WIDTH_MULT`).
+  Covers the 4 LambdaC-mode PID cuts (`Lam0LamC` only) and the Lambda0
+  flight-significance + PID cuts (either channel), each shown for signal MC
+  and weighted background MC side by side. This is what settled the
+  boundary-hugging cases: LambdaC mode 1's proton/kaon cuts visibly gut the
+  background under the peak; the Lambda0 selector's effect is visibly small
+  (matching its small FOM margin) but not negligible, so it was kept rather
+  than dropped.
 - BAD: new subsection in `data_selection.tex` (`sec:stage3pid`) plus a new
-  table (`generated_table_pid_selectors`), explicitly marked "not yet
-  applied" throughout (no cuts have been decided on yet, unlike Stage 2's
-  post-review "applied"/"not applied" callouts).
-
-**Checkpoint items for Matt:** review notebook 03 and the BAD section; decide,
-per PID target, whether to apply the recommended (often loosest-rung) KM
-selector, apply "no PID cut at all" instead (given several scans show the
-loosest rung barely beats no cut), or something else; confirm/adjust the
-LambdaC mode 1 and mode 2 selections (the two clean, non-boundary results).
-Once decided, ask Claude to apply the choices to `channel_config.py`'s `pid`
-section and re-run `run_stage03.py` / `generate_latex_macros.py`.
+  table (`generated_table_pid_selectors`), updated post-review with explicit
+  "applied" callouts (matching Stage 2's pattern) and a note on the
+  diagnostic-notebook cross-check that justified keeping the boundary cases.
+- **Applied to `channel_config.py`'s `pid` section (2026-07-25):**
+  `lambda0_selector = {'p': SuperLooseKMProtonSelection, 'pi':
+  SuperLooseKMPionMicroSelection}` (both channels); Lam0LamC's
+  `lambdac_selector_per_mode`: mode 1 `{p: Tight, K: VeryLoose, pi:
+  SuperLoose}`, mode 2 `{p: Loose}`, mode 3 `{p: SuperTight, pi:
+  SuperLoose}`, mode 4 `{pi: SuperLoose}` -- i.e. every recommended value
+  from the scan, including the boundary-hugging ones.
 
 Stage 2 (Lambda0/K_S0/LambdaC purity optimization) is **complete and
 checked in**. Matt reviewed notebook 02 and the BAD section; of the six
@@ -154,7 +166,10 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
   LambdaC per-mode Gaussian+linear-background mass fit (`fit_mass_peak`).
 - `plotting.py` — stacked SP-mode histograms (signal rescaled per panel to
   background peak, "arb. norm."), mode-split overlays, mES-vs-DeltaE with
-  region boxes, Stage 2 `plot_fom_scan` / `plot_mass_fit`.
+  region boxes, Stage 2 `plot_fom_scan` / `plot_mass_fit`, Stage 3
+  `plot_pid_ladder_scan_1d`/`_2d` (FOM heatmaps/lines) and
+  `plot_mass_cut_diagnostic` (raw mass before/after a cut, S window +
+  sidebands shaded -- independent visual check of any purity/PID cut).
 - `pid_selector.py` — ported PID SelectorsMap bit decoder (`SELECTORS`
   bit->name mapping per particle, `KM_LADDER` per-particle Super Loose ->
   Super Tight ladder, `bits_for_hypothesis`/`passes_selector`).
@@ -171,6 +186,10 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
 - `notebooks/03_pid_optimization.ipynb` — Stage 3 KM-ladder PID scans
   (Lambda0 both channels; LambdaC per mode), no-PID-baseline sanity check,
   multi-candidate study with PID applied, checkpoint cell. MC only.
+- `notebooks/pid_optimization_visualization.ipynb` — mass-distribution
+  diagnostic companion to notebook 03 (not a `run_stage*.py`-backed stage):
+  peak/sideband-shaded Lambda0 and per-mode LambdaC mass, before vs. after
+  each applied cut, signal MC and weighted background MC side by side.
 
 ## Key findings so far
 
@@ -233,10 +252,9 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
 
 1. **Single-candidate requirement for Lam0LamC** (Stage 1/3-4): current
    `nLambda0 == 1` kills mode 4. Options: mode-aware Lambda0 counting, or
-   `nB == 1` only. Stage 3's PID cuts (recommended, not yet applied) reduce
-   the multi-candidate fraction from 8.3% to ~5.0% -- an improvement, not a
-   resolution. Decision still deferred, now until after the antibaryon-veto
-   stage.
+   `nB == 1` only. Stage 3's (now-applied) PID cuts reduce the multi-candidate
+   fraction from 8.3% to ~5.0% -- an improvement, not a resolution. Decision
+   still deferred, now until after the antibaryon-veto stage.
 2. **Exact signal windows per channel** (Stage 1/2): must stay no narrower
    than the upstream blinding; verify against the blinded box.
 3. **Stage 2 FOM-scan boundary issue** (Stage 2, still open): 4 of 6
@@ -253,10 +271,4 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
 
 ## Next steps (agreed)
 
-1. Matt reviews the Stage 3 checkpoint (notebook 03, BAD `sec:stage3pid`,
-   this file) and decides which PID selectors (if any -- several scans are
-   boundary-hugging at the loosest rung, see "Key findings") to apply to
-   `channel_config.py`'s `pid` section.
-2. Once decided: apply to `channel_config.py`, re-run `run_stage03.py` and
-   `generate_latex_macros.py` (Claude can do this on request), then proceed
-   to Stage 4 (antibaryon veto).
+1. Stage 4: antibaryon veto.

@@ -29,7 +29,8 @@ BaBar_BNV_2Lambda_Claude_experiment/
 │   └── notebooks/
 │       ├── 01_load_and_diagnostics.ipynb
 │       ├── 02_lambda_purity.ipynb
-│       └── 03_pid_optimization.ipynb
+│       ├── 03_pid_optimization.ipynb
+│       └── pid_optimization_visualization.ipynb  # mass-diagnostic companion to 03
 ├── results/                  # results/<channel>.yaml -- single source of truth for numbers
 └── BAD_2Lambda/              # the analysis note (BAD)
 ```
@@ -127,8 +128,12 @@ python run_stage03.py --channel all       # both channels
   least one dimension -- `results/<channel>.yaml`'s `stage03` section
   records an explicit "no PID cut at all" comparison FOM for the Lambda0
   scan to check whether the recommended (loosest) selector is still a real
-  improvement over no cut.
-- For the plots (PID scan heatmaps/lines, multi-candidate comparison):
+  improvement over no cut. **Applied to `channel_config.py`'s `pid` section
+  2026-07-25** (all recommended selectors, including the boundary-hugging
+  ones -- see the mass-distribution diagnostic below for why those were
+  kept rather than dropped).
+- For the FOM scan plots (PID scan heatmaps/lines, multi-candidate
+  comparison):
   ```
   cd BNV_2Lambda_analysis/notebooks
   jupyter lab 03_pid_optimization.ipynb
@@ -136,6 +141,17 @@ python run_stage03.py --channel all       # both channels
   Set `CHANNEL = 'Lam0Lam0'` or `'Lam0LamC'` in the second code cell, run
   all cells top to bottom. Plots are written to
   `BNV_2Lambda_analysis/notebooks/plots/<channel>/`.
+- For a visual cross-check independent of the FOM (raw $\Lambda^0$/$\Lambda_c^+$
+  mass distributions before vs. after each cut, with the S window and
+  sideband bands shaded -- same peak/sideband convention as Stage 2):
+  ```
+  cd BNV_2Lambda_analysis/notebooks
+  jupyter lab pid_optimization_visualization.ipynb
+  ```
+  Set `CHANNEL` in the second code cell (the $\Lambda_c^+$ per-mode section
+  only runs for `Lam0LamC`; the $\Lambda^0$ sections run for either
+  channel). Not tied to a `run_stage*.py` script -- diagnostic plots only,
+  no `results/<channel>.yaml` writes.
 
 ### Refreshing the BAD after any stage
 

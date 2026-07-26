@@ -367,9 +367,11 @@ $p$, $K^-$, $\pi^+$; mode 2: $p$ only; mode 3: $p$, $\pi^\pm$; mode 4: the
 three $\pi^\pm$ daughters, with the embedded $\Lambda^0$ covered by the
 $\Lambda^0$ scan above). No PID cut is applied to the $K_S^0$'s own $\pi^+\pi^-$
 daughters at this stage (deferred as a possible future refinement).
-\textbf{None of the values in this section have been applied to
-\texttt{channel\_config.py} yet} -- Stage 3 produces recommendations for
-review, exactly as Stage 2 did.
+\textbf{All recommended selectors in this section (Table~\ref{tab:pidselectors})
+have been applied} to \texttt{channel\_config.py}'s \texttt{pid} section,
+including the boundary-hugging ones (see the discussion below and after
+Table~\ref{tab:pidselectors} for why the loosest KM rung was still judged
+worth keeping over no PID cut at all).
 
 \begin{figure}[tbp]
     \centering
@@ -445,7 +447,11 @@ deferred (Section~\ref{sec:lambdacmodes}, open decision) until after the
 antibaryon-veto stage.
 
 Given how many of the scans above are boundary-hugging at the loosest KM
-rung, the recommendation for the next checkpoint is to decide, per target,
-whether ``no PID cut'' is preferable to ``loosest KM selector'' rather than
-mechanically applying the ladder's edge value -- particularly for the
-$\Lambda^0$ daughters and $\Lambda_c^+$ modes 3/4's pions.
+rung, a companion mass-distribution diagnostic (peak/sideband-shaded
+$\Lambda^0$ and per-mode $\Lambda_c^+$ mass, before vs.\ after each
+recommended selector; not shown in the BAD) was reviewed alongside the FOM
+tables before deciding to keep the loosest KM rung rather than drop PID
+entirely for those targets: the $\Lambda_c^+$ background reduction from
+mode 1's proton/kaon selectors is visibly substantial, while the
+$\Lambda^0$ selector's effect is visibly small (consistent with its small
+FOM margin over no cut) but not negligible, so it was kept.

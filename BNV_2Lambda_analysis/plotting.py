@@ -441,6 +441,52 @@ def plot_pid_ladder_scan_2d(df, row_sel_col, row_idx_col, col_sel_col, col_idx_c
     return grid
 
 ################################################################################
+def plot_mass_cut_diagnostic(mass_before, mass_after, window, sideband_mult=1.0,
+                             weights_before=None, weights_after=None, hist_def=None,
+                             label_before='before cut', label_after='after cut',
+                             title=None, ax=None):
+    """
+    Overlay a composite's own raw mass distribution before/after a purity
+    cut (flight significance or PID), with the S (peak) window and its
+    contiguous sideband bands shaded -- the same peak/sideband convention as
+    the Stage 2 S/sqrt(S+B) scans (channel_config.FOM_SIDEBAND_WIDTH_MULT) --
+    so the effect of the cut on peak vs. sideband-like candidates is visible
+    by eye, independent of whichever FOM/method picked the cut. Does NOT
+    apply the mass-window cut itself: `mass_before`/`mass_after` should be
+    flat arrays over the composite's full mass range (hist_def's lo/hi),
+    only `window` marks where the peak is.
+    """
+    if ax is None:
+        _, ax = plt.subplots(figsize=(6, 4))
+
+    nbins = hist_def['nbins'] if hist_def else 100
+    lo_range = hist_def['lo'] if hist_def else float(np.min(mass_before))
+    hi_range = hist_def['hi'] if hist_def else float(np.max(mass_before))
+    xlabel = hist_def['label'] if hist_def else 'mass [GeV/c$^2$]'
+
+    lo, hi = window
+    sb_width = sideband_mult * (hi - lo)
+
+    ax.axvspan(lo, hi, color='tab:green', alpha=0.15, label='S window', zorder=0)
+    ax.axvspan(lo - sb_width, lo, color='tab:red', alpha=0.12, label='sidebands', zorder=0)
+    ax.axvspan(hi, hi + sb_width, color='tab:red', alpha=0.12, zorder=0)
+
+    bins = np.linspace(lo_range, hi_range, nbins + 1)
+    ax.hist(mass_before, bins=bins, weights=weights_before, histtype='step',
+           color='tab:blue', linewidth=1.5, label=label_before, zorder=2)
+    ax.hist(mass_after, bins=bins, weights=weights_after, histtype='stepfilled',
+           color='tab:orange', alpha=0.6, label=label_after, zorder=1)
+
+    ax.set_xlim(lo_range, hi_range)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel('candidates' if weights_before is None else 'weighted candidates')
+    ax.legend(fontsize=7)
+    if title is not None:
+        ax.set_title(title, fontsize=10)
+
+    return ax
+
+################################################################################
 def plot_mass_fit(fit, hist_def=None, title=None, ax=None):
     """
     Binned mass distribution with the Gaussian-plus-linear-background fit
