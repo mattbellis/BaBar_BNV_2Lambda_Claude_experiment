@@ -455,3 +455,189 @@ entirely for those targets: the $\Lambda_c^+$ background reduction from
 mode 1's proton/kaon selectors is visibly substantial, while the
 $\Lambda^0$ selector's effect is visibly small (consistent with its small
 FOM margin over no cut) but not negligible, so it was kept.
+
+\subsection{Antibaryon veto (Stage 4)\label{sec:stage4veto}}
+
+As in Sections~\ref{sec:stage2purity} and~\ref{sec:stage3pid}, every number
+in this section is generated from \texttt{results/<channel>.yaml} by
+\texttt{generate\_latex\_macros.py}; none is typed by hand.
+
+\subsubsection{Motivation and definition}
+
+Both signal final states are purely baryonic. $\Bz \rightarrow
+\Lambda^0\Lambda^0$ gives $p\pi^- p\pi^-$ and $\Bu \rightarrow
+\Lambda_c^+\Lambda^0$ gives, depending on the $\Lambda_c^+$ mode, five or
+seven charged tracks containing two protons -- in both cases two baryons and
+\emph{no} antibaryon (charge conjugation implied throughout: for the
+conjugate $B$ the final state contains two antiprotons and no proton).
+Standard Model decays that produce a baryon, by contrast, essentially always
+produce a compensating antibaryon, since baryon number is conserved. An
+event containing an identified antiproton that is not part of the signal $B$
+candidate is therefore background-like, and this is the basis of the veto --
+the same reasoning, and the same implementation strategy, as the completed
+$\Bu \rightarrow p\Lambda^0$ analysis.
+
+A $B$ candidate is vetoed if the event contains a track that
+\begin{enumerate}
+  \item is not one of \emph{that} candidate's own tracks,
+  \item passes the chosen KM-family proton selector, and
+  \item carries electric charge opposite to that candidate's signal baryon
+        charge.
+\end{enumerate}
+The signal baryon charge is read off the candidate's own $\Lambda^0$ proton
+daughter, $\mathrm{sign}(\texttt{Lambda0d1Lund})$, rather than being
+hardcoded, so $B$ and $\bar B$ candidates flip automatically and a single
+rule serves both channels and all four $\Lambda_c^+$ decay modes.
+
+Two differences from the reference implementation are worth recording. First,
+the reference operates per \emph{event} and explicitly assumes a single $B$
+candidate; candidate multiplicities here reach ${\sim}60$ per event in the
+$\Lambda_c^+\Lambda^0$ channel (Section~\ref{sec:lambdacmodes}), so the veto
+is built as a per-candidate mask instead. Second, the reference exempts only
+the proton-hypothesis daughters of the signal candidate from firing the
+veto. The signal $\Lambda^0$ pions carry \emph{exactly} the antiproton
+charge, so leaving them eligible allows the signal to veto itself; here all
+of a candidate's tracks are exempt. Both variants are evaluated, and the
+difference is recorded in \texttt{results/<channel>.yaml}.
+
+\subsubsection{Ntuple structure verified, not assumed}
+
+Three structural properties the veto depends on were checked directly on
+signal and background MC in both channels rather than inferred:
+
+\begin{itemize}
+  \item \texttt{pSelectorsMap} is indexed by \emph{track}
+    ($\texttt{len} = \texttt{nTRK}$), not by the proton-hypothesis
+    collection. This matters: the \texttt{p} collection is a strict subset
+    of the tracks, and $24\%$ of the tracks passing
+    \texttt{SuperLooseKMProtonSelection} lie outside it. Restricting the
+    eligible-track pool to the \texttt{p} collection is in fact
+    \emph{degenerate} -- it holds only ${\sim}2$ candidates per event,
+    essentially the signal protons themselves, all of signal-baryon charge,
+    so it contains almost no opposite-charge track and the veto approaches
+    never firing. The per-track map is therefore used, as in the reference.
+  \item $\mathrm{sign}(\texttt{TRKLund})$ is the electric charge: it agrees
+    with $\mathrm{sign}(\texttt{pLund}[\texttt{pTrkIdx}])$ in $207562$ of
+    $207563$ proton entries, the single disagreement being an isolated
+    ntuple inconsistency rather than a pattern.
+  \item The signal baryon sign is consistent within a $B$ candidate: the two
+    $\Lambda^0$ daughters always share a sign in the $\Lambda^0\Lambda^0$
+    channel, and $\mathrm{sign}(\texttt{LambdaCLund})$ always matches the
+    $\Lambda^0$'s proton daughter in the $\Lambda_c^+\Lambda^0$ channel,
+    including mode 4's inner $\Lambda^0$ -- zero mismatches in either case.
+    No same-baryon-number requirement therefore needs to be imposed
+    separately; the reconstruction already enforces it.
+\end{itemize}
+
+The set of tracks belonging to a candidate is built by walking its daughters
+down to track indices, and is validated by requiring the number of distinct
+tracks per candidate to equal the final-state size before anything depends
+on it (\texttt{run\_stage04.py} asserts on this).
+
+\paragraph{Known limitation.} For $\Lambda_c^+$ modes 2 and 3 the $K_S^0$'s
+two pion tracks cannot be resolved from the available branches:
+\texttt{K\_Sd1Idx}/\texttt{K\_Sd2Idx} do not index any collection present in
+the analysis files. They exceed \texttt{npi} for $94\%$ of $K_S^0$
+candidates, and interpreted as track indices they give daughters of opposite
+charge only $55\%$ of the time, against $50\%$ for random assignment. Where
+both indices do happen to fall inside the pion collection ($5.6\%$ of
+candidates) the implied charges are opposite $100\%$ of the time and the
+first daughter is always positive, matching \texttt{K\_Sd1Lund} $= +211$ --
+i.e.\ the intended index space is a pion list, but not the one stored here.
+Kinematic matching against the track collection is not a clean substitute,
+since the daughters are refit at the displaced $K_S^0$ vertex. Those two
+pions consequently remain eligible to fire the veto in modes 2 and 3,
+costing a little signal efficiency in those modes only. The cost is measured
+per mode rather than left implicit: modes 1 and 4 contain no $K_S^0$ and
+provide the clean comparison, with veto efficiencies
+$\LamLamCVetoModeOneEffPct\%$ and $\LamLamCVetoModeFourEffPct\%$ against
+$\LamLamCVetoModeTwoEffPct\%$ and $\LamLamCVetoModeThreeEffPct\%$ for modes
+2 and 3.
+
+\subsubsection{Selector optimization}
+
+The selector defining ``identified antiproton'' is optimized over the
+six-rung KM proton ladder with the same Punzi figure of merit, the same
+$a = 4$, and the same boundary-hugging and low-statistics flagging as
+Section~\ref{sec:stage3pid}; mechanically the veto is one more ladder cut
+expressed as a per-candidate mask. It is evaluated on top of the selection
+already in force -- Stage 2 purity \emph{and} the Stage 3 PID cuts -- so the
+figure of merit measures the veto's own marginal effect, mirroring how
+Stage 3 baselined on Stage 2.
+
+The ladder runs in the opposite direction from Stage 3, which is essential
+when reading the scan: a \emph{looser} proton selector tags more tracks as
+antiprotons, so the veto fires more often, buying background rejection at
+the cost of signal efficiency. Tightening the selector moves the working
+point toward applying no veto at all. Rather than adopting the reference
+analysis's hand-picked \texttt{TightKMProtonSelection} unexamined, the
+ladder is scanned, because the two channels here carry more same-charge-as-
+antiproton pions in the final state than $p\Lambda^0$ did (two in
+$\Lambda^0\Lambda^0$, up to four in $\Lambda_c^+\Lambda^0$), so the pion
+misidentification rate -- and hence the optimal tightness -- is genuinely
+channel dependent.
+
+\input{generated_table_antibaryon_veto}
+
+Table~\ref{tab:antibaryonveto} gives the recommended selector for each
+channel alongside the two comparison points that decide whether the veto is
+worth applying at all: the figure of merit with no veto, and with the
+$p\Lambda^0$ selector. For $\Bz \rightarrow \Lambda^0\Lambda^0$ the scan
+recommends \texttt{\LamLamVetoSelector} with signal efficiency
+$\LamLamVetoSigEffPct\%$, and for $\Bu \rightarrow
+\Lambda_c^+\Lambda^0$ \texttt{\LamLamCVetoSelector} with
+$\LamLamCVetoSigEffPct\%$; both retentions are consistent with the ${\sim}90\%$
+seen in the $p\Lambda^0$ analysis. Neither optimum is at the edge of the
+ladder (boundary-hugging: \LamLamVetoAtBoundary\ and
+\LamLamCVetoAtBoundary\ respectively), in contrast to several of the Stage 2
+and Stage 3 scans.
+
+An anti-$\Lambda^0$ veto -- additionally rejecting candidates in events
+holding a good opposite-sign $\Lambda^0$ -- was evaluated as an optional
+add-on and is \textbf{not} recommended. It is largely redundant by
+construction: the single-candidate requirement already rejects events
+carrying a spare $\bar\Lambda^0$ candidate, and any $\bar\Lambda^0$ contains
+a track the antiproton veto should already catch. Measured, it costs signal
+efficiency without improving the figure of merit
+($\LamLamCVetoAntiLamFom$ against $\LamLamCVetoFom$ for
+$\Lambda_c^+\Lambda^0$).
+
+\subsubsection{Cumulative performance through Stages 1--4}
+
+\input{generated_table_cumulative_cutflow_Lam0Lam0}
+\input{generated_table_cumulative_cutflow_Lam0LamC}
+
+Tables~\ref{tab:cumulativecutflowLamLam}
+and~\ref{tab:cumulativecutflowLamLamC} collect the whole selection in
+pipeline order. Signal and background MC are counted as $B$ candidates
+inside the $m_{ES}/\Delta E$ signal region, matching the Stage 3 Punzi
+convention; because the signal region is a subset of the fit region, the
+fit-region step is a no-op for those columns by construction and is retained
+only so the pipeline order is complete. The data column counts candidates in
+the fit region with the signal box \emph{excluded} -- the blinded signal
+region is not used anywhere in this table, and the mask is applied
+explicitly in the code so the column cannot later be misread as including
+it.
+
+End to end, the selection retains $\LamLamCumSigEffPct\%$
+($\Lambda^0\Lambda^0$) and $\LamLamCCumSigEffPct\%$
+($\Lambda_c^+\Lambda^0$) of the baseline signal candidates while rejecting
+$\LamLamCumBkgRejectionPct\%$ and $\LamLamCCumBkgRejectionPct\%$ of the
+weighted background, leaving $\LamLamCumBkgWeighted$ and
+$\LamLamCCumBkgWeighted$ weighted background candidates in the signal
+region.
+
+Finally, the per-event surviving-candidate multiplicities are recomputed
+after the veto. These deliberately follow the Stage 2 and Stage 3
+convention -- no single-candidate requirement and no $m_{ES}/\Delta E$
+region cut -- since imposing the pipeline's $n_B = 1$ requirement would
+force the multi-candidate fraction to zero by construction and make the
+study vacuous, which is exactly the question left open in
+Section~\ref{sec:lambdacmodes}. For $\Bu \rightarrow \Lambda_c^+\Lambda^0$
+the good-$B$ fractions move from ($\LamLamCFracZeroGoodBPidPct\%$,
+$\LamLamCFracOneGoodBPidPct\%$, $\LamLamCFracMultiGoodBPidPct\%$) after
+Stage 3 to ($\LamLamCFracZeroGoodBVetoPct\%$,
+$\LamLamCFracOneGoodBVetoPct\%$, $\LamLamCFracMultiGoodBVetoPct\%$) for
+(0, 1, $>$1) candidates. The veto continues to erode the multi-candidate
+fraction without eliminating it. As at the two preceding checkpoints, this
+is \textbf{presented for review, not a candidate-selection decision}.

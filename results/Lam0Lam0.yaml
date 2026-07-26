@@ -157,3 +157,183 @@ stage03:
     frac_one_good_B: 0.644196179197855
     frac_multi_good_B: 0.0002010948497374595
   last_updated: '2026-07-25'
+stage04:
+  track_walk_validation:
+    all:
+      expected: 4
+      ok: true
+  veto_scan:
+    ladder:
+    - SuperLooseKMProtonSelection
+    - VeryLooseKMProtonSelection
+    - LooseKMProtonSelection
+    - TightKMProtonSelection
+    - VeryTightKMProtonSelection
+    - SuperTightKMProtonSelection
+    recommended_selector: TightKMProtonSelection
+    fom_at_recommended: 0.4697539692547791
+    sig_eff_at_recommended: 0.9096308867204073
+    bkg_weighted_at_recommended: 1.7496391943850238
+    bkg_raw_mc_at_recommended: 6
+    at_scan_boundary:
+      p_selector_idx: false
+    any_at_scan_boundary: false
+    low_mc_stats_at_recommended: false
+    per_rung:
+    - selector: SuperLooseKMProtonSelection
+      sig_eff: 0.888594258237873
+      bkg_weighted: 1.7496391943850238
+      fom: 0.45889017837687973
+    - selector: VeryLooseKMProtonSelection
+      sig_eff: 0.89577146089662
+      bkg_weighted: 1.7496391943850238
+      fom: 0.4625966482058101
+    - selector: LooseKMProtonSelection
+      sig_eff: 0.9058124734832415
+      bkg_weighted: 1.7496391943850238
+      fom: 0.4677820542718999
+    - selector: TightKMProtonSelection
+      sig_eff: 0.9096308867204073
+      bkg_weighted: 1.7496391943850238
+      fom: 0.4697539692547791
+    - selector: VeryTightKMProtonSelection
+      sig_eff: 0.9121411398670627
+      bkg_weighted: 2.000327101933807
+      fom: 0.45605192338147443
+    - selector: SuperTightKMProtonSelection
+      sig_eff: 0.9131310988544761
+      bkg_weighted: 2.2510150094825905
+      fom: 0.44288076109149227
+    fom_no_veto_at_all: 0.3920150281748881
+    bkg_weighted_no_veto_at_all: 4.507206177421641
+    recommended_beats_no_veto: true
+    reference_selector: TightKMProtonSelection
+    fom_at_reference_selector: 0.4697539692547791
+    sig_eff_at_reference_selector: 0.9096308867204073
+    bkg_weighted_at_reference_selector: 1.7496391943850238
+  alternative_definitions:
+    reference_scope_proton_daughters_only:
+      sig_eff: 0.9096308867204073
+      bkg_weighted: 1.7496391943850238
+      fom: 0.4697539692547791
+      note: 'p-Lambda0-reference exclusion scope: only the proton-hypothesis daughters
+        are exempt, so the signal Lambda0 pions -- which carry exactly the antiproton
+        charge -- can fake the veto.'
+    pool_p_list_only:
+      sig_eff: 1.0
+      bkg_weighted: 4.507206177421641
+      fom: 0.3920150281748881
+      note: 'DEGENERATE, recorded as the justification for pool=all_tracks, not as
+        a competing option: the "p" hypothesis collection holds only ~2 candidates/event
+        (essentially the signal protons themselves, all of signal-baryon charge),
+        so it contains almost no opposite-charge track and the veto approaches never
+        firing.'
+  anti_lambda0_addon:
+    sig_eff: 0.9096308867204073
+    bkg_weighted: 1.7496391943850238
+    fom: 0.4697539692547791
+    note: measured, not adopted; expected near-redundant with the single-candidate
+      requirement
+  cumulative_cutflow:
+  - step: 0
+    name: preselection + single candidate
+    n_signal_candidates: 42658
+    n_signal_events: 42658
+    sig_eff_rel_prev: 1.0
+    sig_eff_rel_baseline: 1.0
+    bkg_weighted: 272.08918986875324
+    bkg_raw_mc_candidates: 768
+    bkg_rejection_rel_baseline: 0.0
+    n_data_candidates_fit_excl_signal: 7831
+    n_data_events_fit_excl_signal: 7831
+  - step: 1
+    name: + fit region
+    n_signal_candidates: 42658
+    n_signal_events: 42658
+    sig_eff_rel_prev: 1.0
+    sig_eff_rel_baseline: 1.0
+    bkg_weighted: 272.08918986875324
+    bkg_raw_mc_candidates: 768
+    bkg_rejection_rel_baseline: 0.0
+    n_data_candidates_fit_excl_signal: 7831
+    n_data_events_fit_excl_signal: 7831
+  - step: 2
+    name: + Stage 2 purity
+    n_signal_candidates: 30212
+    n_signal_events: 30212
+    sig_eff_rel_prev: 0.7082376107646866
+    sig_eff_rel_baseline: 0.7082376107646866
+    bkg_weighted: 16.98983997029621
+    bkg_raw_mc_candidates: 57
+    bkg_rejection_rel_baseline: 0.9375578280839031
+    n_data_candidates_fit_excl_signal: 437
+    n_data_events_fit_excl_signal: 437
+  - step: 3
+    name: + Stage 3 PID
+    n_signal_candidates: 28024
+    n_signal_events: 28024
+    sig_eff_rel_prev: 0.9275784456507348
+    sig_eff_rel_baseline: 0.6569459421444981
+    bkg_weighted: 4.507206177421641
+    bkg_raw_mc_candidates: 17
+    bkg_rejection_rel_baseline: 0.9834348208409317
+    n_data_candidates_fit_excl_signal: 151
+    n_data_events_fit_excl_signal: 151
+  - step: 4
+    name: + Stage 4 antibaryon veto
+    n_signal_candidates: 25498
+    n_signal_events: 25498
+    sig_eff_rel_prev: 0.9098629745932059
+    sig_eff_rel_baseline: 0.5977307890665291
+    bkg_weighted: 1.7496391943850238
+    bkg_raw_mc_candidates: 6
+    bkg_rejection_rel_baseline: 0.9935696115114717
+    n_data_candidates_fit_excl_signal: 59
+    n_data_events_fit_excl_signal: 59
+  candidate_multiplicities:
+    0:
+      step: 0
+      name: Stage 2 purity
+      n_signal_events: 44755
+      n_good_B_distribution:
+        0: 13637
+        1: 31104
+        2: 14
+      frac_zero_good_B: 0.30470338509663725
+      frac_one_good_B: 0.6949838006926601
+      frac_multi_good_B: 0.0003128142107027148
+      n_good_Lambda0_from_B_distribution:
+        0: 8087
+        1: 36624
+        2: 44
+    1:
+      step: 1
+      name: + Stage 3 PID
+      n_signal_events: 44755
+      n_good_B_distribution:
+        0: 15915
+        1: 28831
+        2: 9
+      frac_zero_good_B: 0.35560272595240755
+      frac_one_good_B: 0.644196179197855
+      frac_multi_good_B: 0.0002010948497374595
+      n_good_Lambda0_from_B_distribution:
+        0: 9362
+        1: 35352
+        2: 41
+    2:
+      step: 2
+      name: + Stage 4 antibaryon veto
+      n_signal_events: 44755
+      n_good_B_distribution:
+        0: 18535
+        1: 26214
+        2: 6
+      frac_zero_good_B: 0.4141436710982013
+      frac_one_good_B: 0.5857222656686404
+      frac_multi_good_B: 0.00013406323315830632
+      n_good_Lambda0_from_B_distribution:
+        0: 9362
+        1: 35352
+        2: 41
+  last_updated: '2026-07-26'

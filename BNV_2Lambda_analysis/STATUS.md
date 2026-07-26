@@ -1,10 +1,175 @@
 # STATUS — BNV 2-Lambda analyses
 
-Snapshot of where things stand. Last updated: **2026-07-25** (Stage 3 PID
-selector optimization reviewed by Matt; all recommended selectors, including
-the boundary-hugging ones, applied to `channel_config.py`. Ready for Stage 4.)
+Snapshot of where things stand. Last updated: **2026-07-26** (Stage 4
+antibaryon veto **run and documented**; awaiting Matt's review decisions.)
+
+## >>> PICK UP HERE (read this first after a break) <<<
+
+Stage 4 is **done and run**. `run_stage04.py --channel all`,
+`generate_latex_macros.py` and `latexmk` have all been executed;
+`results/<channel>.yaml` section `stage04` is populated and the BAD builds
+clean (exit 0, no undefined refs, 38 pp). **Nothing is committed** -- the
+working tree holds all of Stage 4 plus earlier uncommitted edits.
+
+**Nothing has been applied to `channel_config.py`**:
+`antibaryon_veto['selector']` is still `None`, i.e. **no veto is in force**
+for any other code.
+
+**Four decisions are waiting on Matt** (details + numbers below):
+
+1. **Which veto selector to apply per channel.** Scan says
+   `TightKMProtonSelection` (Lam0Lam0) and `LooseKMProtonSelection`
+   (Lam0LamC). Caveat: the Lam0LamC optimum is *shallow and non-monotonic*
+   (FOM 0.3579 at Loose, dips to 0.3530 at Tight, back up to 0.3552 at
+   SuperTight) -- so adopting the p-Lambda0 `Tight` for BOTH channels, for
+   cross-analysis consistency, costs only 1.4% of FOM in Lam0LamC and
+   nothing at all in Lam0Lam0 (where Tight *is* the optimum). That is a
+   defensible alternative to the literal scan output.
+2. **Anti-Lambda0 add-on**: recommend leaving OFF. Measured: no FOM gain in
+   either channel (Lam0LamC 0.3556 vs 0.3579; Lam0Lam0 bit-identical, i.e.
+   fully redundant).
+3. **Single-candidate requirement** (open decision 1 below). This was parked
+   "until after the antibaryon-veto stage" -- that has now happened, so it
+   is ready to decide. The multi-candidate fraction is no longer the main
+   problem (4.4%); the 39.7% **zero**-good-B fraction is.
+4. **Stale `stage02` numbers** -- re-run `run_stage02.py --channel all`
+   (see item 5 under "Open decisions").
+
+**Also not done:** `notebooks/04_antibaryon_veto.ipynb` has been written but
+**never executed**, so it has no output cells and its plots
+(`antibaryon_veto_scan.png`, `..._mes_diagnostic.png`,
+`..._deltae_diagnostic.png`, `..._lambda0_mass_diagnostic.png`) do not exist
+yet and are not in the BAD. Run it for both channels, then
+`./copy_plots_to_BAD.sh`. (VS Code: use "Revert File" first if it is open.)
+
+### Stage 4 final numbers (from `results/<channel>.yaml`, section `stage04`)
+
+Veto scan (Punzi, a=4, on top of Stage 2 purity + Stage 3 PID). Neither
+optimum is boundary-hugging and neither rests on low MC stats:
+
+| | Lam0Lam0 | Lam0LamC |
+|---|---|---|
+| recommended | `TightKMProtonSelection` | `LooseKMProtonSelection` |
+| signal eff | 0.9096 | 0.8934 |
+| weighted bkg | 1.75 | 4.23 |
+| FOM | 0.4698 | 0.3579 |
+| FOM, no veto at all | 0.3920 | 0.2654 |
+| FOM at p-Lambda0 `Tight` | 0.4698 (same point) | 0.3530 |
+
+Full ladders (selector, eff, bkg, FOM):
+
+- Lam0Lam0: SuperLoose .8886/1.75/.4589 | VeryLoose .8958/1.75/.4626 |
+  Loose .9058/1.75/.4678 | **Tight .9096/1.75/.4698** |
+  VeryTight .9121/2.00/.4561 | SuperTight .9131/2.25/.4429.
+  Background is *flat* at 1.75 over the first four rungs, so the FOM there
+  is driven purely by signal efficiency; it only turns over once bkg rises.
+- Lam0LamC: SuperLoose .8650/4.23/.3465 | VeryLoose .8772/4.23/.3514 |
+  **Loose .8934/4.23/.3579** | Tight .8987/4.48/.3530 |
+  VeryTight .9028/4.48/.3546 | SuperTight .9042/4.48/.3552. Note the
+  non-monotonicity -- the "optimum" is a shallow local max.
+
+Cumulative Stage 1-4 (signal/bkg = B candidates in the signal box; data =
+fit region EXCLUDING the signal box):
+
+| Step | Lam0Lam0 sig / eff / bkg / data | Lam0LamC sig / eff / bkg / data |
+|---|---|---|
+| 0 presel + single cand | 42658 / 1.000 / 272.09 / 7831 | 53801 / 1.000 / 142.32 / 4114 |
+| 1 + fit region | 42658 / 1.000 / 272.09 / 7831 | 53801 / 1.000 / 142.32 / 4114 |
+| 2 + Stage 2 purity | 30212 / 0.708 / 16.99 / 437 | 43398 / 0.807 / 12.72 / 412 |
+| 3 + Stage 3 PID | 28024 / 0.657 / 4.51 / 151 | 38303 / 0.712 / 2.75 / 81 |
+| 4 + Stage 4 veto | 25498 / **0.598** / **1.75** / 59 | 34425 / **0.640** / **1.49** / 34 |
+
+(Step 1 is a no-op for all three columns *by construction* -- the signal box
+is a subset of the fit region, and the data column already has the fit
+region imposed. Kept only so the pipeline order is complete.)
+
+Per-event good-B fractions (0 / 1 / >1), Stage 2/3/4 convention -- no
+single-candidate cut, no region cut:
+
+- Lam0Lam0: 0.305/0.695/0.000 -> 0.356/0.644/0.000 -> **0.414/0.586/0.000**
+- Lam0LamC: 0.232/0.700/0.068 -> 0.324/0.626/0.050 -> **0.397/0.559/0.044**
+
+Per-LambdaC-mode veto efficiency (quantifies the K_S0 caveat below):
+mode 1 **0.9004**, mode 2 0.8880, mode 3 0.8910, mode 4 **0.8934**.
+Modes 1 and 4 have no K_S0 and are the clean comparison.
 
 ## Where we are
+
+Stage 4 (antibaryon veto + cumulative Stage 1-4 performance) is **complete
+and run** -- numbers and pending decisions are in the "PICK UP HERE" block
+above. Implementation detail follows.
+
+- **Veto definition**: per-B-candidate (the p-Lambda0 reference is per-event
+  and explicitly assumes one B/event; Lam0LamC reaches ~60). A candidate is
+  vetoed if the event holds a track that (a) is not one of *that*
+  candidate's tracks, (b) passes the chosen KM proton selector, and (c) has
+  charge opposite to that candidate's signal baryon charge, read off its own
+  Lambda0 proton daughter (`sign(Lambda0d1Lund)`) so B/Bbar flip
+  automatically. Exclusion scope is **all** of the candidate's tracks, not
+  just the proton daughters as in the reference -- the signal Lambda0 pions
+  carry exactly the antiproton charge, so leaving them eligible lets the
+  signal veto itself.
+- `cutflow.py`: `get_signal_b_track_slots` (mode-dispatched daughter walk to
+  TRK indices, reusing the Stage 3 slot map), `count_signal_b_tracks`
+  (validation handle), `get_antibaryon_veto_mask`, `get_anti_lambda0_veto_mask`
+  (add-on, measured not adopted), plus `get_pid_candidate_masks` /
+  `get_pid_mask_per_B` (factored out of run_stage03's inline logic).
+  The veto counts the event's opposite-charge selector-passing tracks once and
+  subtracts each candidate's own (with explicit de-duplication), rather than
+  materializing an O(nB x nTRK) per-B/per-track boolean.
+- `pid_optimization.py`: `scan_antibaryon_veto` (reuses `evaluate_combo`
+  unchanged) and `veto_efficiency_by_lambdac_mode`.
+- `cumulative_performance.py` (new): `build_pipeline_masks`,
+  `cumulative_cutflow`, `candidate_multiplicities`.
+- `run_stage04.py --channel all`, `notebooks/04_antibaryon_veto.ipynb`, BAD
+  subsection `sec:stage4veto` + two new generated tables
+  (`generated_table_antibaryon_veto`,
+  `generated_table_cumulative_cutflow_<channel>`).
+
+**Structural facts verified empirically, not assumed** (both channels, full
+MC files):
+
+- `pSelectorsMap` is indexed by **track** (`len == nTRK`). The `p` hypothesis
+  list is a strict subset of tracks and **24% of tracks passing
+  SuperLooseKMProtonSelection lie outside it**, so the eligible-track pool is
+  a real choice. Using the `p` list alone is **degenerate** -- it holds only
+  ~2 candidates/event (essentially the signal protons, all of signal-baryon
+  charge), so it contains almost no opposite-charge track and the veto
+  approaches never firing. The per-track map is used, as in the reference.
+- `sign(TRKLund)` is the electric charge: agrees with
+  `sign(pLund[pTrkIdx])` in 207562/207563 proton entries (one isolated
+  ntuple inconsistency, not a pattern).
+- Signal baryon sign is consistent within a B candidate: both Lambda0s share
+  a sign (Lam0Lam0) and `sign(LambdaCLund)` matches the Lambda0's proton
+  (Lam0LamC, including mode 4's inner Lambda0) -- **0 mismatches** either
+  way. So no separate same-baryon-number requirement is needed.
+- Track walk validated: distinct resolvable tracks per B candidate are
+  exactly 4 (Lam0Lam0) and 5/3/5/7 for LambdaC modes 1/2/3/4, with zero
+  deviation over 368345 candidates. `run_stage04.py` asserts on this.
+
+**Known limitation (Lam0LamC modes 2 and 3) -- flagged, low impact:** the
+K_S0's two pion tracks **cannot be resolved** from these parquet files.
+`K_Sd1Idx`/`K_Sd2Idx` index no collection present in the file: they exceed
+`npi` for 94% of K_S0 candidates, and in TRK space the implied daughter
+charges are opposite only 55% of the time (random = 50%). Where both indices
+do land inside the pi collection (5.6%) the charges are opposite 100% of the
+time and d1 is always positive, matching `K_Sd1Lund = +211` -- so the
+intended index space *is* a pion list, just not the one stored here.
+Kinematic matching to TRK is not a clean substitute (daughters are refit at
+the displaced vertex; <1 MeV match only 45% of the time, consistent with
+combinatorics). Those two pions therefore stay eligible to fire the veto in
+modes 2/3. **Measured cost ~1%**: veto efficiency 0.900/0.888/0.891/0.893
+for modes 1/2/3/4 -- mode 4 has no K_S0 and sits at 0.893, so the deficit is
+small and partly confounded with track multiplicity anyway.
+
+**Found while doing Stage 4 -- needs Matt's attention:** the `stage02`
+multi-candidate numbers stored in `results/Lam0LamC.yaml` (16.3/75.4/8.3%)
+are **stale** -- they predate the current `channel_config.py`. Re-running
+`run_stage02.multi_candidate_numbers` against today's config gives
+**23.2/70.0/6.8%** (verified bit-for-bit against Stage 4's own Stage-2 row,
+distributions identical). The `stage03` numbers (32.4/62.6/5.0%) *are*
+current and are reproduced exactly. Fix: re-run
+`python run_stage02.py --channel all` and `generate_latex_macros.py`.
 
 Stage 3 (PID selector optimization, Punzi FOM) is **complete and checked
 in**. Matt reviewed notebook 03, the BAD section, and a new mass-distribution
@@ -177,8 +342,16 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
   (`evaluate_combo`), KM-ladder grid scans (`scan_lambda0_pid`,
   `scan_lambdac_mode_pid`), and boundary/low-stats flagging
   (`best_from_ladder_scan`, reusing `purity_optimization.is_at_scan_boundary`).
-- `run_stage01.py`, `run_stage02.py`, `run_stage03.py` — write
-  `results/<channel>.yaml`.
+  Stage 4 additions: `scan_antibaryon_veto` (1D KM proton-ladder scan,
+  reusing `evaluate_combo` unchanged) and `veto_efficiency_by_lambdac_mode`.
+- `cumulative_performance.py` — Stage 4 Phase 3: `build_pipeline_masks`
+  (the whole selection in pipeline order), `cumulative_cutflow` (signal/bkg
+  in the signal box, data in fit-region-minus-signal-box), and
+  `candidate_multiplicities` (Stage 2/3 convention: no single-candidate cut,
+  no region cut, so it stays comparable across stages).
+- `run_stage01.py`, `run_stage02.py`, `run_stage03.py`, `run_stage04.py` —
+  write `results/<channel>.yaml`. `run_stage04.py` is the only one that
+  reads collision data (fit region minus signal box only).
 - `notebooks/01_load_and_diagnostics.ipynb` — full Stage 0/1 diagnostics,
   channel-parametrized, incl. blinding-verification cell.
 - `notebooks/02_lambda_purity.ipynb` — Stage 2 scans/fits, cross-check
@@ -186,6 +359,11 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
 - `notebooks/03_pid_optimization.ipynb` — Stage 3 KM-ladder PID scans
   (Lambda0 both channels; LambdaC per mode), no-PID-baseline sanity check,
   multi-candidate study with PID applied, checkpoint cell. MC only.
+- `notebooks/04_antibaryon_veto.ipynb` — Stage 4 veto ladder scan,
+  comparison points, per-mode efficiency, before/after diagnostics (mES,
+  DeltaE, plus a Lambda0-mass null check), cumulative cutflow and
+  multiplicity tables, checkpoint cell. **Written but never executed** —
+  see the resume checklist at the end of this file.
 - `notebooks/pid_optimization_visualization.ipynb` — mass-distribution
   diagnostic companion to notebook 03 (not a `run_stage*.py`-backed stage):
   peak/sideband-shaded Lambda0 and per-mode LambdaC mass, before vs. after
@@ -253,8 +431,12 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
 1. **Single-candidate requirement for Lam0LamC** (Stage 1/3-4): current
    `nLambda0 == 1` kills mode 4. Options: mode-aware Lambda0 counting, or
    `nB == 1` only. Stage 3's (now-applied) PID cuts reduce the multi-candidate
-   fraction from 8.3% to ~5.0% -- an improvement, not a resolution. Decision
-   still deferred, now until after the antibaryon-veto stage.
+   fraction from 8.3% to ~5.0% -- an improvement, not a resolution. Stage 4's
+   veto takes it further, to ~4.4% (0/1/>1 = 39.7/55.9/4.4% at the
+   recommended selector), still without resolving it -- and the zero-good-B
+   fraction is now the dominant term, which is the real cost to weigh
+   against relaxing the requirement. **This was deferred "until after the
+   antibaryon-veto stage", which has now happened: it is ready to decide.**
 2. **Exact signal windows per channel** (Stage 1/2): must stay no narrower
    than the upstream blinding; verify against the blinded box.
 3. **Stage 2 FOM-scan boundary issue** (Stage 2, still open): 4 of 6
@@ -269,6 +451,74 @@ boundary-scan issue (parked, see above); not a blocker for Stage 3.
    abstract) quote 424.3 fb^-1 at the Y(4S) — likely on-peak vs. total.
    *Decision (Matt, 2026-07-22): keep 430.9 for now, may revisit.*
 
+5. **Stale `stage02` multi-candidate numbers** (found during Stage 4, see
+   above): `results/Lam0LamC.yaml`'s stage02 section predates the current
+   `channel_config.py`. Needs `run_stage02.py --channel all` re-run. Not a
+   Stage 4 blocker -- Stage 4 recomputes its own Stage-2 row -- but the BAD
+   quotes the stale numbers until it is fixed.
+
 ## Next steps (agreed)
 
-1. Stage 4: antibaryon veto.
+1. Matt reviews the Stage 4 checkpoint: notebook 04, the BAD
+   `sec:stage4veto` section, and `results/<channel>.yaml` section `stage04`.
+   Decisions needed: (a) which veto selector to apply per channel, or
+   whether to take the p-Lambda0 value for cross-analysis consistency;
+   (b) confirm the anti-Lambda0 add-on stays off (measured: costs efficiency,
+   no FOM gain); (c) whether to re-run Stage 2 to refresh the stale
+   multi-candidate numbers; (d) the single-candidate requirement.
+2. Stage 5: MLP classifier.
+
+## Resume checklist (2026-07-26)
+
+What is already done, so it is not repeated: `run_stage04.py --channel all`,
+`generate_latex_macros.py`, and `latexmk` have all been run. Do NOT re-run
+them unless something changes.
+
+To finish the Stage 4 checkpoint:
+
+```
+# 1. Execute notebook 04 for BOTH channels (it has never been run --
+#    no output cells, and its four plots do not exist yet).
+cd BNV_2Lambda_analysis/notebooks
+jupyter lab 04_antibaryon_veto.ipynb     # set CHANNEL, run all, for each channel
+
+# 2. Refresh the stale stage02 numbers (independent of the above)
+cd ..
+python run_stage02.py --channel all
+
+# 3. Only after 1 and/or 2:
+python generate_latex_macros.py
+./copy_plots_to_BAD.sh
+cd ../BAD_2Lambda && latexmk -pdf main.tex
+```
+
+Then apply the accepted veto selector to `channel_config.py`'s
+`antibaryon_veto['selector']` per channel (currently `None` = no veto), and
+add explicit "applied"/"not applied" callouts to the BAD Stage 4 section,
+matching the pattern used at the Stage 2 and Stage 3 checkpoints.
+
+### Uncommitted working tree (nothing has been committed)
+
+New files (untracked): `cumulative_performance.py`, `run_stage04.py`,
+`notebooks/04_antibaryon_veto.ipynb`,
+`BAD_2Lambda/generated_table_antibaryon_veto.tex`,
+`BAD_2Lambda/generated_table_cumulative_cutflow_{Lam0Lam0,Lam0LamC}.tex`,
+plus five Stage 2/3 diagnostic figures.
+
+Modified: `cutflow.py`, `channel_config.py`, `pid_optimization.py`,
+`generate_latex_macros.py`, `results/{Lam0Lam0,Lam0LamC}.yaml`,
+`BAD_2Lambda/data_selection.tex`, `BAD_2Lambda/generated_numbers.tex`,
+`WORKFLOW-README.md`, `STATUS.md`, and several Stage 2/3 figures.
+
+The commit for this checkpoint has not been made -- ask before committing,
+and never push (CLAUDE.md).
+
+### Gotcha worth remembering
+
+`BAD_2Lambda/data_selection.tex` was briefly broken by a careless global
+`sed 's/LamLamZero/LamLam/g'`: the string `LamLamZero` occurs *inside*
+pre-existing macro names (`\LamLamLamZeroPidFom` contains it at offset 3),
+so four Stage 2/3 macros were silently mangled. Already fixed and verified
+(zero undefined `LamLam*` macros across all `.tex`), but do not run
+unanchored `sed` over that file again -- scope any replacement to the
+specific macro names.

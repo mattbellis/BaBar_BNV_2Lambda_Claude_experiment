@@ -202,6 +202,177 @@ def macros_for_channel_stage03(channel, res):
     return m
 
 ################################################################################
+def macros_for_channel_stage04(channel, res):
+    """Stage 4 (antibaryon veto) macros: recommended KM proton selector, its
+    Punzi FOM/efficiency/background, the no-veto and p-Lambda0-reference
+    comparison points, the anti-Lambda0 add-on, and the endpoint cumulative
+    efficiency / background rejection / multi-candidate fractions."""
+    ch = CHANNEL_PREFIX[channel]
+    s = res.get('stage04')
+    if s is None:
+        return []
+
+    v = s['veto_scan']
+    m = [
+        (f"{ch}VetoSelector", v['recommended_selector']),
+        (f"{ch}VetoFom", fmt_float(v['fom_at_recommended'], "{:.3f}")),
+        (f"{ch}VetoSigEffPct", fmt_float(100 * v['sig_eff_at_recommended'], "{:.1f}")),
+        (f"{ch}VetoBkgWeighted", fmt_float(v['bkg_weighted_at_recommended'], "{:.2f}")),
+        (f"{ch}VetoAtBoundary", "yes" if v['any_at_scan_boundary'] else "no"),
+        (f"{ch}VetoFomNoVeto", fmt_float(v['fom_no_veto_at_all'], "{:.3f}")),
+        (f"{ch}VetoBkgNoVeto", fmt_float(v['bkg_weighted_no_veto_at_all'], "{:.2f}")),
+        (f"{ch}VetoRefSelector", v['reference_selector']),
+        (f"{ch}VetoFomRefSelector", fmt_float(v['fom_at_reference_selector'], "{:.3f}")),
+        (f"{ch}VetoSigEffRefSelectorPct",
+         fmt_float(100 * v['sig_eff_at_reference_selector'], "{:.1f}")),
+    ]
+
+    if 'anti_lambda0_addon' in s:
+        a = s['anti_lambda0_addon']
+        m.append((f"{ch}VetoAntiLamFom", fmt_float(a['fom'], "{:.3f}")))
+        m.append((f"{ch}VetoAntiLamSigEffPct", fmt_float(100 * a['sig_eff'], "{:.1f}")))
+
+    # Per-LambdaC-mode veto efficiency (quantifies the unresolvable-K_S0 caveat)
+    for mode, name in MODE_NAME.items():
+        pm = (s.get('veto_efficiency_by_lambdac_mode') or {}).get(mode)
+        if pm is None:
+            continue
+        m.append((f"{ch}VetoMode{name}EffPct", fmt_float(100 * pm['efficiency'], "{:.1f}")))
+
+    # Endpoint of the cumulative cutflow
+    cum = s.get('cumulative_cutflow') or []
+    if cum:
+        last = cum[-1]
+        m += [
+            (f"{ch}CumSigEffPct", fmt_float(100 * last['sig_eff_rel_baseline'], "{:.1f}")),
+            (f"{ch}CumBkgRejectionPct",
+             fmt_float(100 * last['bkg_rejection_rel_baseline'], "{:.2f}")),
+            (f"{ch}CumBkgWeighted", fmt_float(last['bkg_weighted'], "{:.2f}")),
+            (f"{ch}CumNDataFitExclSignal", fmt_int(last['n_data_candidates_fit_excl_signal'])),
+        ]
+
+    mult = s.get('candidate_multiplicities') or {}
+    if mult:
+        final = mult[max(mult)]
+        m += [
+            (f"{ch}FracZeroGoodBVetoPct", fmt_float(100 * final['frac_zero_good_B'], "{:.1f}")),
+            (f"{ch}FracOneGoodBVetoPct", fmt_float(100 * final['frac_one_good_B'], "{:.1f}")),
+            (f"{ch}FracMultiGoodBVetoPct", fmt_float(100 * final['frac_multi_good_B'], "{:.1f}")),
+        ]
+
+    return m
+
+################################################################################
+def write_table_cumulative_cutflow(channel, res):
+    """
+    Cumulative Stage 1-4 selection performance for one channel.
+
+    The data column is the fit region with the signal box REMOVED -- the
+    caption says so explicitly, because a reader who assumes "fit region"
+    includes the signal box would misread the blinding status of the table.
+    """
+    s = res.get('stage04')
+    if s is None or not s.get('cumulative_cutflow'):
+        return
+
+    rows = s['cumulative_cutflow']
+    ch_label = CHANNELS[channel]['decay_label']
+
+    lines = [r"% AUTO-GENERATED -- DO NOT EDIT BY HAND",
+             r"\begin{table}[h]",
+             rf"\caption{{Cumulative selection performance through Stages 1--4"
+             rf" for the {ch_label} channel. Signal and background MC are"
+             rf" counted as $B$ candidates inside the $m_{{ES}}/\Delta E$"
+             rf" signal region (so the fit-region step is a no-op for those"
+             rf" columns by construction); background MC is"
+             rf" luminosity-weighted. The data column counts candidates in the"
+             rf" fit region {{\em excluding}} the signal box: the blinded"
+             rf" signal region is never used.}}",
+             rf"\label{{tab:cumulativecutflow{CHANNEL_PREFIX[channel]}}}",
+             r"\centering",
+             r"\small",
+             r"\begin{tabular}{llrrrrrr}",
+             r"\toprule",
+             r"& & \multicolumn{3}{c}{signal MC} & \multicolumn{2}{c}{background MC}"
+             r" & data \\",
+             r"\cmidrule(lr){3-5}\cmidrule(lr){6-7}\cmidrule(lr){8-8}",
+             r"Step & Cut & $N$ & $\epsilon_{\rm prev}$ & $\epsilon_{\rm tot}$"
+             r" & yield & rej. & $N$ \\",
+             r"\midrule"]
+
+    for r in rows:
+        name = r['name'].replace('_', r'\_')
+        lines.append(" & ".join([
+            str(r['step']), name,
+            fmt_int(r['n_signal_candidates']),
+            fmt_float(r['sig_eff_rel_prev'], "{:.3f}"),
+            fmt_float(r['sig_eff_rel_baseline'], "{:.3f}"),
+            fmt_float(r['bkg_weighted'], "{:.2f}"),
+            fmt_float(r['bkg_rejection_rel_baseline'], "{:.3f}"),
+            fmt_int(r['n_data_candidates_fit_excl_signal']),
+        ]) + r" \\")
+
+    lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+
+    outname = os.path.join(BAD_DIR, f"generated_table_cumulative_cutflow_{channel}.tex")
+    with open(outname, 'w') as f:
+        f.write("\n".join(lines) + "\n")
+    print(f"Wrote {outname}")
+
+################################################################################
+def write_table_antibaryon_veto(all_results):
+    """Stage 4 veto scan result per channel, next to the two comparison
+    points that decide whether it is worth applying (no veto at all, and the
+    p-Lambda0 analysis's hand-picked selector)."""
+    rows = []
+    for channel in ('Lam0Lam0', 'Lam0LamC'):
+        s = all_results.get(channel, {}).get('stage04')
+        if s is None:
+            continue
+        rows.append((CHANNELS[channel]['decay_label'], s['veto_scan']))
+
+    if not rows:
+        return
+
+    lines = [r"% AUTO-GENERATED -- DO NOT EDIT BY HAND",
+             r"\begin{table}[h]",
+             r"\caption{Stage 4 antibaryon-veto optimization. The recommended"
+             r" KM proton selector maximizes the Punzi FOM ($a=4$) over the"
+             r" six-rung ladder, evaluated on top of the Stage 2 purity and"
+             r" Stage 3 PID selection. Note the ladder runs opposite to Stage"
+             r" 3: a looser selector makes the veto fire more often. Two"
+             r" comparison points are given -- applying no veto at all, and"
+             r" the selector used by the $B^+ \to p \Lambda^0$ analysis.}",
+             r"\label{tab:antibaryonveto}",
+             r"\centering",
+             r"\small",
+             r"\begin{tabular}{llrrrrr}",
+             r"\toprule",
+             r"& \multicolumn{4}{c}{recommended} & no veto & $p\Lambda^0$ ref. \\",
+             r"\cmidrule(lr){2-5}\cmidrule(lr){6-6}\cmidrule(lr){7-7}",
+             r"Channel & selector & $\epsilon_{\rm sig}$ (\%) & $B$ & FOM"
+             r" & FOM & FOM \\",
+             r"\midrule"]
+
+    for label, v in rows:
+        lines.append(" & ".join([
+            label,
+            v['recommended_selector'].replace('KMProtonSelection', ''),
+            fmt_float(100 * v['sig_eff_at_recommended'], "{:.1f}"),
+            fmt_float(v['bkg_weighted_at_recommended'], "{:.2f}"),
+            fmt_float(v['fom_at_recommended'], "{:.3f}"),
+            fmt_float(v['fom_no_veto_at_all'], "{:.3f}"),
+            fmt_float(v['fom_at_reference_selector'], "{:.3f}"),
+        ]) + r" \\")
+
+    lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+
+    outname = os.path.join(BAD_DIR, "generated_table_antibaryon_veto.tex")
+    with open(outname, 'w') as f:
+        f.write("\n".join(lines) + "\n")
+    print(f"Wrote {outname}")
+
+################################################################################
 def write_table_pid_selectors(all_results):
     """Stage 3 recommended KM-ladder selector(s) and Punzi FOM/efficiency/
     background per PID target (Lambda0, both channels; LambdaC per mode,
@@ -315,6 +486,8 @@ def write_macros(all_results):
         for name, value in macros_for_channel_stage02(channel, res):
             lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
         for name, value in macros_for_channel_stage03(channel, res):
+            lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
+        for name, value in macros_for_channel_stage04(channel, res):
             lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
 
     outname = os.path.join(BAD_DIR, 'generated_numbers.tex')
@@ -500,9 +673,11 @@ if __name__ == '__main__':
         if 'stage01' in res:
             write_table_samples(channel, res)
             write_table_cutflow(channel, res)
+        write_table_cumulative_cutflow(channel, res)
     write_table_lambdac_modes(all_results)
     write_table_lambdac_mode_fits(all_results)
     write_table_pid_selectors(all_results)
+    write_table_antibaryon_veto(all_results)
     write_table_dataskims()
 
     print("\nDone. Remember to rerun this script whenever a results file changes.")

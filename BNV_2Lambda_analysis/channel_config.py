@@ -54,6 +54,50 @@ def _default_purity_scan_ranges():
     }
 
 ################################################################################
+# Stage 4 (antibaryon veto) configuration
+#
+# The BNV signal final state is all-baryon (two protons, or two antiprotons
+# for the charge-conjugate B) with no antibaryon, while SM decays producing a
+# baryon also produce a compensating antibaryon. A B candidate is therefore
+# vetoed if the event contains an identified antiproton that is not one of
+# that candidate's own tracks (cutflow.get_antibaryon_veto_mask).
+#
+# 'selector' stays None until the Stage 4 checkpoint is reviewed -- None
+# means "no veto applied" (pass-all), the same convention the 'pid' section
+# used before Stage 3 was accepted.
+################################################################################
+def _default_antibaryon_veto():
+    return {
+        # KM-family proton selector that defines "identified antiproton".
+        # None = veto not applied. Optimized over pid_selector.KM_LADDER['p']
+        # with the Punzi FOM by run_stage04.py; the p-Lambda0 reference used
+        # 'TightKMProtonSelection'.
+        'selector': None,
+
+        # Which of the signal B candidate's tracks are exempt from firing
+        # the veto:
+        #   'all_signal_tracks'     -- every track of the candidate. Preferred:
+        #      the Lambda0 pions carry exactly the antiproton charge, so
+        #      leaving them eligible makes the signal veto itself.
+        #   'proton_daughters_only' -- only the proton-hypothesis daughters,
+        #      reproducing the p-Lambda0 reference implementation. Kept so the
+        #      difference is measured rather than asserted.
+        'scope': 'all_signal_tracks',
+
+        # Which tracks may fire the veto:
+        #   'all_tracks' -- every track, via the per-track pSelectorsMap (what
+        #      the p-Lambda0 reference does). This matters: 24% of the tracks
+        #      passing SuperLooseKMProtonSelection are outside the 'p' list.
+        #   'p_list'     -- only tracks in the 'p' hypothesis list.
+        'pool': 'all_tracks',
+
+        # Optional add-on measured at the Stage 4 checkpoint, off by default:
+        # also veto candidates in events holding a good opposite-sign Lambda0.
+        # Expected to be near-redundant with the single-candidate requirement.
+        'veto_anti_lambda0': False,
+    }
+
+################################################################################
 # SP mode information, shared by both channels
 #
 # 'color' is used for the individual-mode plots, 'label' in legends.
@@ -199,6 +243,8 @@ CHANNELS['Lam0Lam0'] = {
     'pid': {
         'lambda0_selector': {'p': 'SuperLooseKMProtonSelection', 'pi': 'SuperLooseKMPionMicroSelection'},
     },
+
+    'antibaryon_veto': _default_antibaryon_veto(),
 }
 
 # ------------------------------------------------------------------------
@@ -361,6 +407,14 @@ CHANNELS['Lam0LamC']['pid'] = {
         4: {'pi': 'SuperLooseKMPionMicroSelection'},
     },
 }
+
+# Stage 4 antibaryon veto. NOTE (Lam0LamC only): for LambdaC modes 2 and 3
+# the K_S0's two pion tracks cannot be resolved from these parquet files and
+# so are NOT exempted from firing the veto -- see the detailed note in
+# cutflow.get_signal_b_track_slots. Measured cost is ~1% of signal efficiency
+# in those modes (mode 2/3 retention 0.893/0.892 vs. 0.895 for mode 4, which
+# has no K_S0), recorded per mode in results/Lam0LamC.yaml.
+CHANNELS['Lam0LamC']['antibaryon_veto'] = _default_antibaryon_veto()
 
 
 ################################################################################

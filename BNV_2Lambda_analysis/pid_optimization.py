@@ -176,6 +176,82 @@ def scan_lambdac_mode_pid(data_sp, config, weights, baseline_mask, mode, ladders
     return pd.DataFrame(rows)
 
 ################################################################################
+# Stage 4: antibaryon-veto selector scan
+#
+# Same Punzi FOM, same ladder machinery, same boundary/low-stats flagging as
+# the Stage 3 PID scans above -- the veto is, mechanically, one more KM-ladder
+# cut expressed as a per-B mask, so it reuses evaluate_combo unchanged and
+# produces a DataFrame that best_from_ladder_scan and
+# plotting.plot_pid_ladder_scan_1d consume without modification.
+#
+# The ladder runs the OPPOSITE way from Stage 3, which is worth keeping in
+# mind when reading the scan: a LOOSER proton selector tags more tracks as
+# antiprotons, so the veto fires more often -- more background rejection AND
+# more signal loss. Tightening the selector moves toward "no veto at all".
+################################################################################
+def scan_antibaryon_veto(data_sp, config, weights, baseline_mask,
+                         ladder=None, scope=None, pool=None):
+    """
+    1D scan over the KM proton ladder for the antibaryon veto.
+
+    scope/pool default to the channel's 'antibaryon_veto' config; pass them
+    explicitly to produce the alternative-definition comparisons reported at
+    the checkpoint (reference-faithful scope, p-list-only pool).
+    """
+    veto_cfg = config.get('antibaryon_veto', {})
+    scope = scope if scope is not None else veto_cfg.get('scope', 'all_signal_tracks')
+    pool = pool if pool is not None else veto_cfg.get('pool', 'all_tracks')
+    ladder = ladder or pid_selector.KM_LADDER['p']
+
+    rows = []
+    for i, sel in enumerate(ladder):
+        veto_mask = cutflow.get_antibaryon_veto_mask(data_sp, config, selector=sel,
+                                                     scope=scope, pool=pool)
+
+        result = evaluate_combo(data_sp, config, weights, baseline_mask, veto_mask)
+        result.update({'p_selector': sel, 'p_selector_idx': i,
+                       'scope': scope, 'pool': pool})
+        rows.append(result)
+
+    return pd.DataFrame(rows)
+
+################################################################################
+def veto_efficiency_by_lambdac_mode(data_sp, config, baseline_mask, selector,
+                                    scope=None, pool=None):
+    """
+    Signal-MC veto efficiency split by LambdaC decay mode (Lam0LamC only).
+
+    Reported because the exclusion set is not equally complete across modes:
+    modes 2 and 3 contain a K_S0 whose two pion tracks cannot be resolved
+    from these files, so those pions stay eligible to fire the veto (see
+    cutflow.get_signal_b_track_slots). Modes 1 and 4 have no K_S0 and are the
+    clean comparison -- this function is what turns that caveat into a
+    number in results/Lam0LamC.yaml instead of a footnote.
+    """
+    veto_cfg = config.get('antibaryon_veto', {})
+    scope = scope if scope is not None else veto_cfg.get('scope', 'all_signal_tracks')
+    pool = pool if pool is not None else veto_cfg.get('pool', 'all_tracks')
+
+    signal_box = cutflow.get_signal_region_mask(data_sp, config)
+    base = baseline_mask & signal_box & (data_sp['spmode'] == SIGNAL_SP_MODE)
+
+    keep = cutflow.get_antibaryon_veto_mask(data_sp, config, selector=selector,
+                                            scope=scope, pool=pool)
+    mode = cutflow.get_lambdac_decay_mode_per_B(data_sp, config)
+
+    out = {}
+    for m in sorted(config['lambdac_modes']):
+        b = base & (mode == m)
+        n_den = int(ak.sum(b))
+        n_num = int(ak.sum(b & keep))
+        out[int(m)] = {
+            'n_before': n_den, 'n_after': n_num,
+            'efficiency': float(n_num / n_den) if n_den > 0 else 0.0,
+            'k0s_daughters_unresolved': bool(m in (2, 3)),
+        }
+    return out
+
+################################################################################
 def best_from_ladder_scan(df, ladder_idx_cols, fom_col='fom'):
     """
     Best-FOM row from a ladder scan, plus a per-dimension boundary flag
